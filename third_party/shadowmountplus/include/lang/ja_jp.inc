@@ -1,15 +1,15 @@
 static const char *const g_ja_jp[SM_L10N_COUNT] = {
     /* English: Go to Debug Settings */
     [SM_L10N_ACTION_DEBUG_SETTINGS] = "デバッグ設定へ移動",
-    /* English: HyperHEN Automount\nCoded by MICHELE MEDIA */
-    [SM_L10N_STARTUP] = "HyperHEN Automount\nCoded by MICHELE MEDIA",
-    /* English: HyperHEN Automount\nCoded by MICHELE MEDIA\nControl: http://%s:%u */
+    /* English: HYL92 Automount\nCoded by Lamine 5656 */
+    [SM_L10N_STARTUP] = "HYL92 Automount\nCoded by Lamine 5656",
+    /* English: HYL92 Automount\nCoded by Lamine 5656\nControl: http://%s:%u */
     [SM_L10N_STARTUP_WEB] =
-        "HyperHEN Automount\nCoded by MICHELE MEDIA\nControl: http://%s:%u",
-    /* English: HyperHEN Automount: recursive_scan=1 is deprecated, using scan_depth=2. */
-    [SM_L10N_RECURSIVE_SCAN_DEPRECATED] = "HyperHEN Automount: recursive_scan=1 は非推奨です。scan_depth=2 を使用します。",
-    /* English: HyperHEN Automount: scan depth %u enabled. */
-    [SM_L10N_SCAN_DEPTH_ENABLED] = "HyperHEN Automount: スキャン深度 %u が有効です。",
+        "HYL92 Automount\nCoded by Lamine 5656\nControl: http://%s:%u",
+    /* English: HYL92 Automount: recursive_scan=1 is deprecated, using scan_depth=2. */
+    [SM_L10N_RECURSIVE_SCAN_DEPRECATED] = "HYL92 Automount: recursive_scan=1 は非推奨です。scan_depth=2 を使用します。",
+    /* English: HYL92 Automount: scan depth %u enabled. */
+    [SM_L10N_SCAN_DEPTH_ENABLED] = "HYL92 Automount: スキャン深度 %u が有効です。",
     /* English: Backport overlay failed: %s\n%s\n0x%08X */
     [SM_L10N_BACKPORT_OVERLAY_FAILED] = "バックポートオーバーレイのマウントに失敗しました: %s\n%s\n0x%08X",
     /* English: Emulators applied to game: %s */
@@ -56,14 +56,14 @@ static const char *const g_ja_jp[SM_L10N_COUNT] = {
     [SM_L10N_FOUND_NEW_GAMES] = "%d 本の新しいゲームを検出しました。処理中...",
     /* English: Library synchronized.\nFound %d games. */
     [SM_L10N_LIBRARY_SYNCED] = "ライブラリを同期しました。\n%d 本のゲームを検出しました。",
-    /* English: HyperHEN Automount: config reloaded. */
-    [SM_L10N_CONFIG_RELOADED] = "HyperHEN Automount: 設定を再読み込みしました。",
+    /* English: HYL92 Automount: config reloaded. */
+    [SM_L10N_CONFIG_RELOADED] = "HYL92 Automount: 設定を再読み込みしました。",
     /* English: Duplicate %s ignored:\n%s\nexisting: %s */
     [SM_L10N_DUPLICATE_IGNORED] = "重複 %s を無視しました:\n%s\n既存: %s",
     /* English: AMPR emulator updated */
     [SM_L10N_AMPR_EMULATOR_UPDATED] = "AMPRエミュレーターを更新しました",
-    /* English: HyperHEN Automount: failed to install ShellCore hooks */
-    [SM_L10N_SHELLCORE_HOOKS_FAILED] = "HyperHEN Automount: ShellCoreフックのインストールに失敗しました",
+    /* English: HYL92 Automount: failed to install ShellCore hooks */
+    [SM_L10N_SHELLCORE_HOOKS_FAILED] = "HYL92 Automount: ShellCoreフックのインストールに失敗しました",
     /* English: Target temperature %u °C → %u °C */
     [SM_L10N_TEMPERATURE_TRANSITION] = "目標温度 %u °C → %u °C",
     /* English: External drive %s connected\nFree %llu.%llu GB of %llu.%llu (Block size %llu KB)\nGames on drive: %d%s */

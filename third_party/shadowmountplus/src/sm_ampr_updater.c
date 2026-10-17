@@ -669,7 +669,7 @@ check_and_update_ampr(const ampr_update_config_t *snapshot) {
     log_sce_failure("sceHttpInit", http_id);
     goto cleanup;
   }
-  template_id = sceHttpCreateTemplate(http_id, "HyperHEN Automount/1.0",
+  template_id = sceHttpCreateTemplate(http_id, "HYL92 Automount/1.0",
                                        AMPR_HTTP_VERSION_1_1, 1);
   if (template_id < 0) {
     log_sce_failure("sceHttpCreateTemplate", template_id);

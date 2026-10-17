@@ -1,11 +1,11 @@
 static const char *const g_en_us[SM_L10N_COUNT] = {
     [SM_L10N_ACTION_DEBUG_SETTINGS] = "Go to Debug Settings",
-    [SM_L10N_STARTUP] = "HyperHEN Automount\nCoded by MICHELE MEDIA",
+    [SM_L10N_STARTUP] = "HYL92 Automount\nCoded by Lamine 5656",
     [SM_L10N_STARTUP_WEB] =
-        "HyperHEN Automount\nCoded by MICHELE MEDIA\nControl: http://%s:%u",
+        "HYL92 Automount\nCoded by Lamine 5656\nControl: http://%s:%u",
     [SM_L10N_RECURSIVE_SCAN_DEPRECATED] =
-        "HyperHEN Automount: recursive_scan=1 is deprecated, using scan_depth=2.",
-    [SM_L10N_SCAN_DEPTH_ENABLED] = "HyperHEN Automount: scan depth %u enabled.",
+        "HYL92 Automount: recursive_scan=1 is deprecated, using scan_depth=2.",
+    [SM_L10N_SCAN_DEPTH_ENABLED] = "HYL92 Automount: scan depth %u enabled.",
     [SM_L10N_BACKPORT_OVERLAY_FAILED] =
         "Backport overlay failed: %s\n%s\n0x%08X",
     [SM_L10N_GAME_BACKPORTED] = "Backport applied to game: %s",
@@ -43,12 +43,12 @@ static const char *const g_en_us[SM_L10N_COUNT] = {
     [SM_L10N_MISSING_PARAM] = "Missing/invalid param.json:\n%s",
     [SM_L10N_FOUND_NEW_GAMES] = "Found %d new games. Processing...",
     [SM_L10N_LIBRARY_SYNCED] = "Library synchronized.\nFound %d games.",
-    [SM_L10N_CONFIG_RELOADED] = "HyperHEN Automount: config reloaded.",
+    [SM_L10N_CONFIG_RELOADED] = "HYL92 Automount: config reloaded.",
     [SM_L10N_DUPLICATE_IGNORED] =
         "Duplicate %s ignored:\n%s\nexisting: %s",
     [SM_L10N_AMPR_EMULATOR_UPDATED] = "AMPR emulator updated",
     [SM_L10N_SHELLCORE_HOOKS_FAILED] =
-        "HyperHEN Automount: failed to install ShellCore hooks",
+        "HYL92 Automount: failed to install ShellCore hooks",
     [SM_L10N_TEMPERATURE_TRANSITION] =
         "Target temperature %u °C → %u °C",
     [SM_L10N_USB_CONNECTED_SCANNING] =

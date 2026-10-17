@@ -1,15 +1,15 @@
 static const char *const g_sv_se[SM_L10N_COUNT] = {
     /* English: Go to Debug Settings */
     [SM_L10N_ACTION_DEBUG_SETTINGS] = "Gå till felsökningsinställningar",
-    /* English: HyperHEN Automount\nCoded by MICHELE MEDIA */
-    [SM_L10N_STARTUP] = "HyperHEN Automount\nCoded by MICHELE MEDIA",
-    /* English: HyperHEN Automount\nCoded by MICHELE MEDIA\nControl: http://%s:%u */
+    /* English: HYL92 Automount\nCoded by Lamine 5656 */
+    [SM_L10N_STARTUP] = "HYL92 Automount\nCoded by Lamine 5656",
+    /* English: HYL92 Automount\nCoded by Lamine 5656\nControl: http://%s:%u */
     [SM_L10N_STARTUP_WEB] =
-        "HyperHEN Automount\nCoded by MICHELE MEDIA\nControl: http://%s:%u",
-    /* English: HyperHEN Automount: recursive_scan=1 is deprecated, using scan_depth=2. */
-    [SM_L10N_RECURSIVE_SCAN_DEPRECATED] = "HyperHEN Automount: recursive_scan=1 är föråldrat, använder scan_depth=2.",
-    /* English: HyperHEN Automount: scan depth %u enabled. */
-    [SM_L10N_SCAN_DEPTH_ENABLED] = "HyperHEN Automount: skanningsdjup %u aktiverat.",
+        "HYL92 Automount\nCoded by Lamine 5656\nControl: http://%s:%u",
+    /* English: HYL92 Automount: recursive_scan=1 is deprecated, using scan_depth=2. */
+    [SM_L10N_RECURSIVE_SCAN_DEPRECATED] = "HYL92 Automount: recursive_scan=1 är föråldrat, använder scan_depth=2.",
+    /* English: HYL92 Automount: scan depth %u enabled. */
+    [SM_L10N_SCAN_DEPTH_ENABLED] = "HYL92 Automount: skanningsdjup %u aktiverat.",
     /* English: Backport overlay failed: %s\n%s\n0x%08X */
     [SM_L10N_BACKPORT_OVERLAY_FAILED] = "Backport-overlay misslyckades: %s\n%s\n0x%08X",
     /* English: Emulators applied to game: %s */
@@ -56,14 +56,14 @@ static const char *const g_sv_se[SM_L10N_COUNT] = {
     [SM_L10N_FOUND_NEW_GAMES] = "Hittade %d nya spel. Bearbetar...",
     /* English: Library synchronized.\nFound %d games. */
     [SM_L10N_LIBRARY_SYNCED] = "Bibliotek synkroniserat.\nHittade %d spel.",
-    /* English: HyperHEN Automount: config reloaded. */
-    [SM_L10N_CONFIG_RELOADED] = "HyperHEN Automount: konfigurationen lästes in på nytt.",
+    /* English: HYL92 Automount: config reloaded. */
+    [SM_L10N_CONFIG_RELOADED] = "HYL92 Automount: konfigurationen lästes in på nytt.",
     /* English: Duplicate %s ignored:\n%s\nexisting: %s */
     [SM_L10N_DUPLICATE_IGNORED] = "Dubblett %s ignorerad:\n%s\nbefintlig: %s",
     /* English: AMPR emulator updated */
     [SM_L10N_AMPR_EMULATOR_UPDATED] = "AMPR-emulatorn har uppdaterats",
-    /* English: HyperHEN Automount: failed to install ShellCore hooks */
-    [SM_L10N_SHELLCORE_HOOKS_FAILED] = "HyperHEN Automount: det gick inte att installera ShellCore-hooks",
+    /* English: HYL92 Automount: failed to install ShellCore hooks */
+    [SM_L10N_SHELLCORE_HOOKS_FAILED] = "HYL92 Automount: det gick inte att installera ShellCore-hooks",
     /* English: Target temperature %u °C → %u °C */
     [SM_L10N_TEMPERATURE_TRANSITION] = "Måltemperatur %u °C → %u °C",
     /* English: External drive %s connected\nFree %llu.%llu GB of %llu.%llu (Block size %llu KB)\nGames on drive: %d%s */

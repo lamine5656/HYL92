@@ -67,7 +67,7 @@ static pthread_mutex_t g_runtime_mount_state_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void hyperhen_automount_clear_marker(const char *path) {
   if (unlink(path) != 0 && errno != ENOENT)
-    printf("[HyperHEN] Failed to clear marker %s: %s\n", path,
+    printf("[HYL92] Failed to clear marker %s: %s\n", path,
            strerror(errno));
 }
 
@@ -99,7 +99,7 @@ static bool hyperhen_automount_signal_ready(void) {
 static void hyperhen_automount_signal_failed(void) {
   hyperhen_automount_clear_marker(HYPERHEN_AUTOMOUNT_READY);
   if (!hyperhen_automount_write_marker(HYPERHEN_AUTOMOUNT_FAILED, "1"))
-    printf("[HyperHEN] Failed to publish automount failure: %s\n",
+    printf("[HYL92] Failed to publish automount failure: %s\n",
            strerror(errno));
 }
 
@@ -636,7 +636,7 @@ int main(void) {
   char firmware_version[32];
   get_firmware_version_string(firmware_version);
   log_debug(
-      "HyperHEN Automount v%s exFAT/UFS/PFS/LVD/MD. "
+      "HYL92 Automount v%s exFAT/UFS/PFS/LVD/MD. "
       "FW: %s. "
       "Build: %s. "
       "Thx to VoidWhisper/Gezine/Earthonion/EchoStretch/Drakmor",

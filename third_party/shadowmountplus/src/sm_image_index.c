@@ -23,7 +23,7 @@
 
 _Static_assert(sizeof(SHADOWMOUNT_BUILD_TIME) <=
                    IMAGE_INDEX_BUILD_TIME_LENGTH,
-               "HyperHEN Automount build time does not fit the image index");
+               "HYL92 Automount build time does not fit the image index");
 
 typedef struct {
   char path[MAX_PATH];
@@ -248,7 +248,7 @@ static const char *index_header_invalid_reason(
   }
   if (strncmp(header->build_time, SHADOWMOUNT_BUILD_TIME,
               sizeof(header->build_time)) != 0) {
-    return "HyperHEN Automount build changed";
+    return "HYL92 Automount build changed";
   }
   if (!g_image_index_context_valid)
     return "configuration stamp unavailable";
