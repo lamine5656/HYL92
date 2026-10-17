@@ -10,7 +10,7 @@
     "payload.delay": "自動起動前の待機時間（秒）",
     "payload.delay.sub": "0～300 秒。この Payload の自動起動順が来てから待機する時間",
     "payload.status.schedule_fmt": "%s · 優先度 %d · 待機 %d 秒",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "コンテンツのインストールと管理",
     "group.pkg.sub": "PKG のインストールと追加コンテンツの管理",
     "group.payloads": "ペイロードとカーネル",

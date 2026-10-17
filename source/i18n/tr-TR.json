@@ -10,7 +10,7 @@
     "payload.delay": "Otomatik başlatma gecikmesi (saniye)",
     "payload.delay.sub": "0-300 saniye; bu Payload otomatik başlamadan önce bekle",
     "payload.status.schedule_fmt": "%s · Öncelik %d · Gecikme %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "İçerik kurulumu ve yönetimi",
     "group.pkg.sub": "PKG kurun ve ek içeriği yönetin",
     "group.payloads": "Payload ve çekirdek",

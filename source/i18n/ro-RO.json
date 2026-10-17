@@ -10,7 +10,7 @@
     "payload.delay": "Întârziere pornire automată (secunde)",
     "payload.delay.sub": "0-300 de secunde; așteptare înainte ca acest Payload să pornească automat",
     "payload.status.schedule_fmt": "%s · Prioritate %d · Întârziere %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Instalare și gestionare conținut",
     "group.pkg.sub": "Instalați PKG-uri și gestionați conținutul suplimentar",
     "group.payloads": "Payload-uri și nucleu",

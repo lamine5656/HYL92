@@ -10,7 +10,7 @@
     "payload.delay": "Zpoždění automatického spuštění (sekundy)",
     "payload.delay.sub": "0-300 sekund; čekání před automatickým spuštěním tohoto Payload",
     "payload.status.schedule_fmt": "%s · Priorita %d · Zpoždění %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Instalace a správa obsahu",
     "group.pkg.sub": "Instalujte PKG a spravujte doplňkový obsah",
     "group.payloads": "Payload a jádro",

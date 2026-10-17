@@ -10,7 +10,7 @@
     "payload.delay": "Espera antes do início automático (segundos)",
     "payload.delay.sub": "0-300 segundos; espera antes de iniciar este Payload automaticamente",
     "payload.status.schedule_fmt": "%s · Prioridade %d · Espera %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Instalação e gerenciamento de conteúdo",
     "group.pkg.sub": "Instalar PKGs e gerenciar conteúdo adicional",
     "group.payloads": "Payloads e kernel",

@@ -10,7 +10,7 @@
     "payload.delay": "Tunda mulai otomatis (detik)",
     "payload.delay.sub": "0-300 detik; tunggu sebelum Payload ini mulai otomatis",
     "payload.status.schedule_fmt": "%s · Prioritas %d · Tunda %d d",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Pemasangan dan pengelolaan konten",
     "group.pkg.sub": "Pasang PKG dan kelola konten tambahan",
     "group.payloads": "Payload dan kernel",

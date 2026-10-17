@@ -31,7 +31,12 @@ static void notify_system_plain_message(const char *message) {
 
 static bool ensure_notification_icon_present(void) {
   struct stat st;
-  if (stat(NOTIFY_ICON_FILE, &st) == 0 && st.st_size > 0)
+  /*
+   * The swapped HYL92 icon must win over copies left by older installs: only
+   * accept the file while its size matches the embedded asset exactly.
+   */
+  if (stat(NOTIFY_ICON_FILE, &st) == 0 && st.st_size > 0 &&
+      (size_t)st.st_size == smp_icon_png_len)
     return true;
 
   (void)mkdir("/user/data", 0777);

@@ -10,7 +10,7 @@
     "payload.delay": "Forsinkelse før autostart (sekunder)",
     "payload.delay.sub": "0-300 sekunder; vent før denne Payloaden starter automatisk",
     "payload.status.schedule_fmt": "%s · Prioritet %d · Forsinkelse %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Installasjon og administrasjon av innhold",
     "group.pkg.sub": "Installer PKG-filer og administrer tilleggsinnhold",
     "group.payloads": "Payloads og kjerne",

@@ -10,7 +10,7 @@
     "payload.delay": "Opóźnienie automatycznego uruchamiania (sekundy)",
     "payload.delay.sub": "0-300 sekund; czas oczekiwania przed automatycznym uruchomieniem tego Payloadu",
     "payload.status.schedule_fmt": "%s · Priorytet %d · Opóźnienie %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Instalacja i zarządzanie zawartością",
     "group.pkg.sub": "Instalacja PKG i zarządzanie zawartością dodatkową",
     "group.payloads": "Payloady i jądro",

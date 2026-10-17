@@ -10,7 +10,7 @@
     "payload.delay": "自动启动前延时（秒）",
     "payload.delay.sub": "0-300 秒，轮到此 Payload 自动启动时等待的时间",
     "payload.status.schedule_fmt": "%s · 优先级 %d · 延时 %d 秒",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "内容安装与管理",
     "group.pkg.sub": "安装 PKG 与管理附加内容",
     "group.payloads": "Payload 与内核",

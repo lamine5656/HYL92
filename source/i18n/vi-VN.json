@@ -10,7 +10,7 @@
     "payload.delay": "Độ trễ tự khởi động (giây)",
     "payload.delay.sub": "0-300 giây; chờ trước khi Payload này tự khởi động",
     "payload.status.schedule_fmt": "%s · Ưu tiên %d · Trễ %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Cài đặt và quản lý nội dung",
     "group.pkg.sub": "Cài PKG và quản lý nội dung bổ sung",
     "group.payloads": "Payload và nhân",

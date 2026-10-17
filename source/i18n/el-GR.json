@@ -10,7 +10,7 @@
     "payload.delay": "Καθυστέρηση αυτόματης εκκίνησης (δευτερόλεπτα)",
     "payload.delay.sub": "0-300 δευτερόλεπτα· αναμονή πριν ξεκινήσει αυτόματα αυτό το Payload",
     "payload.status.schedule_fmt": "%s · Προτεραιότητα %d · Καθυστέρηση %d δ",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Εγκατάσταση και διαχείριση περιεχομένου",
     "group.pkg.sub": "Εγκατάσταση PKG και διαχείριση πρόσθετου περιεχομένου",
     "group.payloads": "Payload και πυρήνας",

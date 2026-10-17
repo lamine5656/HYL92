@@ -3,6 +3,7 @@
 #include "sm_appdb.h"
 #include "sm_filesystem.h"
 #include "sm_install.h"
+#include "sm_limits.h"
 #include "sm_log.h"
 #include "sm_paths.h"
 #include "sm_shell_icon.h"
@@ -62,12 +63,12 @@ static bool install_asset(const char *path, const unsigned char *data,
 }
 
 void sm_shell_icon_install_if_missing(void) {
-  if (is_installed(SM_SHELL_ICON_TITLE_ID)) {
-    log_debug("  [SHELLICON] already installed: %s",
-              SM_SHELL_ICON_TITLE_ID);
-    return;
-  }
-
+  /*
+   * Stage the HYL92 tile metadata on every boot, not only on first install.
+   * A tile left behind by an older automount keeps its old name and icon for
+   * as long as the title directory exists, so converge it to the current
+   * HYL92 branding every run.
+   */
   if (!ensure_directory(SM_SHELL_ICON_DIR) ||
       !ensure_directory(SM_SHELL_ICON_SCE_SYS_DIR)) {
     log_debug("  [SHELLICON] failed to create app directory: %s",
@@ -86,6 +87,34 @@ void sm_shell_icon_install_if_missing(void) {
                      (size_t)assets_shell_icon_param_json_len)) {
     log_debug("  [SHELLICON] failed to stage param.json: %s",
               strerror(errno));
+    return;
+  }
+
+  /* Keep the registered appmeta mirrors in sync with the staged files; the
+   * home shelf reads its name/icon from these copies. */
+  bool appmeta_synced = true;
+  if (ensure_directory("/user/appmeta/" SM_SHELL_ICON_TITLE_ID)) {
+    static const char *const staged_names[] = {"icon0.png", "param.json"};
+    for (size_t i = 0; i < sizeof(staged_names) / sizeof(staged_names[0]);
+         ++i) {
+      char src_path[MAX_PATH];
+      char dst_path[MAX_PATH];
+      snprintf(src_path, sizeof(src_path), SM_SHELL_ICON_SCE_SYS_DIR "/%s",
+               staged_names[i]);
+      snprintf(dst_path, sizeof(dst_path), "/user/appmeta/" SM_SHELL_ICON_TITLE_ID "/%s",
+               staged_names[i]);
+      if (copy_file(src_path, dst_path) != 0) {
+        log_debug("  [SHELLICON] appmeta sync failed: %s -> %s", src_path,
+                  dst_path);
+        appmeta_synced = false;
+      }
+    }
+  }
+
+  if (is_installed(SM_SHELL_ICON_TITLE_ID)) {
+    log_debug("  [SHELLICON] refreshed HYL92 tile: %s (appmeta=%s)",
+              SM_SHELL_ICON_TITLE_ID, appmeta_synced ? "synced" : "stale");
+    invalidate_app_db_title_cache();
     return;
   }
 

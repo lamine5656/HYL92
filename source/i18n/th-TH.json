@@ -10,7 +10,7 @@
     "payload.delay": "เวลาหน่วงก่อนเริ่มอัตโนมัติ (วินาที)",
     "payload.delay.sub": "0-300 วินาที ระยะเวลาที่รอก่อนเริ่ม Payload นี้โดยอัตโนมัติ",
     "payload.status.schedule_fmt": "%s · ลำดับความสำคัญ %d · หน่วง %d วินาที",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "ติดตั้งและจัดการคอนเทนต์",
     "group.pkg.sub": "ติดตั้ง PKG และจัดการคอนเทนต์เสริม",
     "group.payloads": "Payload และเคอร์เนล",

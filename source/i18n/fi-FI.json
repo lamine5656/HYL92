@@ -10,7 +10,7 @@
     "payload.delay": "Automaattisen käynnistyksen viive (sekuntia)",
     "payload.delay.sub": "0-300 sekuntia; odota ennen kuin tämä Payload käynnistyy automaattisesti",
     "payload.status.schedule_fmt": "%s · Prioriteetti %d · Viive %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Sisällön asennus ja hallinta",
     "group.pkg.sub": "Asenna PKG-tiedostoja ja hallitse lisäsisältöä",
     "group.payloads": "Payloadit ja ydin",

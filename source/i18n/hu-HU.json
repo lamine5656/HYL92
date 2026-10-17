@@ -10,7 +10,7 @@
     "payload.delay": "Automatikus indítás késleltetése (másodperc)",
     "payload.delay.sub": "0-300 másodperc; várakozás, mielőtt ez a Payload automatikusan elindul",
     "payload.status.schedule_fmt": "%s · Prioritás %d · Késleltetés %d s",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Tartalom telepítése és kezelése",
     "group.pkg.sub": "PKG-k telepítése és kiegészítő tartalom kezelése",
     "group.payloads": "Payloadok és kernel",

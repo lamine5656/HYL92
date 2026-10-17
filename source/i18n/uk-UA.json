@@ -10,7 +10,7 @@
     "payload.delay": "Затримка автозапуску (секунди)",
     "payload.delay.sub": "0-300 секунд; очікування перед автоматичним запуском цього Payload",
     "payload.status.schedule_fmt": "%s · Пріоритет %d · Затримка %d с",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "Встановлення та керування вмістом",
     "group.pkg.sub": "Встановлюйте PKG і керуйте додатковим вмістом",
     "group.payloads": "Payload і ядро",

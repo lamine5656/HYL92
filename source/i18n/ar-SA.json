@@ -10,7 +10,7 @@
     "payload.delay": "التأخير قبل التشغيل التلقائي (بالثواني)",
     "payload.delay.sub": "0-300 ثانية؛ مدة الانتظار قبل تشغيل هذا Payload تلقائياً",
     "payload.status.schedule_fmt": "%s · الأولوية %d · التأخير %d ثانية",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "تثبيت المحتوى وإدارته",
     "group.pkg.sub": "تثبيت ملفات PKG وإدارة المحتوى الإضافي",
     "group.payloads": "الحمولات والنواة",

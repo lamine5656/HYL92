@@ -66,5 +66,20 @@ bool bootstrap_assets_write(void) {
   mkdir("/system_ex/vsh_asset", 0777);
   (void)write_file_atomic("/system_ex/vsh_asset/hyperhen.png", sicon_start,
                           sicon_size);
+
+  /*
+   * Prefer the HYL92 skull on any stock system asset that already exists;
+   * never create them, or a stock file becomes HYL92-branded out of nowhere.
+   */
+  static const char *const kRebrandIfPresent[] = {
+      "/system_ex/vsh_asset/icon_setting.png",
+  };
+  for (size_t i = 0; i < sizeof(kRebrandIfPresent) / sizeof(kRebrandIfPresent[0]);
+       ++i) {
+    struct stat st;
+    if (stat(kRebrandIfPresent[i], &st) == 0 && S_ISREG(st.st_mode)) {
+      (void)write_file_atomic(kRebrandIfPresent[i], sicon_start, sicon_size);
+    }
+  }
   return startup_icon_ready;
 }

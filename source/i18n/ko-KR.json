@@ -10,7 +10,7 @@
     "payload.delay": "자동 시작 전 대기 시간(초)",
     "payload.delay.sub": "0-300초, 이 Payload의 자동 시작 차례가 된 후 기다리는 시간",
     "payload.status.schedule_fmt": "%s · 우선순위 %d · 대기 %d초",
-    "root.title": "★HYL92 Tools",
+    "root.title": "★ HYL92 Tools",
     "group.pkg": "콘텐츠 설치 및 관리",
     "group.pkg.sub": "PKG 설치와 추가 콘텐츠 관리",
     "group.payloads": "페이로드 및 커널",
