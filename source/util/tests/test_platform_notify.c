@@ -19,7 +19,7 @@ static void format_msg(char *out, size_t out_sz, int wm, const char *fmt, ...) {
 static int test_notify_format_prefix(void) {
   char out[128];
   format_msg(out, sizeof(out), 1, "hello %s", "world");
-  TEST_ASSERT_STREQ("[HyperHEN] hello world", out);
+  TEST_ASSERT_STREQ("[HYL92] hello world", out);
   return 0;
 }
 
@@ -28,7 +28,7 @@ static int test_notify_format_truncates(void) {
   format_msg(out, sizeof(out), 1, "0123456789ABCDEFGHIJ");
   /* must be NUL-terminated and start with watermark prefix */
   TEST_ASSERT_TRUE(out[sizeof(out) - 1] == '\0' || strlen(out) < sizeof(out));
-  TEST_ASSERT_TRUE(strncmp(out, "[HyperHEN]", 10) == 0);
+  TEST_ASSERT_TRUE(strncmp(out, "[HYL92]", 10) == 0);
   return 0;
 }
 
@@ -80,9 +80,9 @@ static int test_notify_debug_localized(void) {
   TEST_ASSERT_STREQ("Remote Play device paired.",
                     (const char *)&g_debug_notify_request[0x2D]);
 
-  onion_notify_debug(/*show_watermark=*/1, "notify.boot.thanks");
+  onion_notify_debug(/*show_watermark=*/1, "notify.remote_play.paired");
   TEST_ASSERT_TRUE(g_debug_notify_request[0x2C] == 0);
-  TEST_ASSERT_STREQ("[HyperHEN] HyperHEN READY — UNLEASH THE POWER!",
+  TEST_ASSERT_STREQ("[HYL92] Remote Play device paired.",
                     (const char *)&g_debug_notify_request[0x2D]);
   TEST_ASSERT_TRUE(g_debug_notify_request[0x42D] == '\0');
 
@@ -216,62 +216,62 @@ static int test_notify_format_localized(void) {
   char out[128];
   onion_notify_set_language(ONION_NOTIFY_LANG_ZH_HANS);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] 无法提升权限", out);
+  TEST_ASSERT_STREQ("[HYL92] 无法提升权限", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_EN);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Unable to raise privileges", out);
+  TEST_ASSERT_STREQ("[HYL92] Unable to raise privileges", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_AR);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] تعذّر رفع الامتيازات", out);
+  TEST_ASSERT_STREQ("[HYL92] تعذّر رفع الامتيازات", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_ZH_HANT);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] 無法提升權限", out);
+  TEST_ASSERT_STREQ("[HYL92] 無法提升權限", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_JA);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] 権限を昇格できません", out);
+  TEST_ASSERT_STREQ("[HYL92] 権限を昇格できません", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_FR);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Impossible d’élever les privilèges", out);
+  TEST_ASSERT_STREQ("[HYL92] Impossible d’élever les privilèges", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_DE);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Berechtigungen konnten nicht erhöht werden",
+  TEST_ASSERT_STREQ("[HYL92] Berechtigungen konnten nicht erhöht werden",
                     out);
   onion_notify_set_language(ONION_NOTIFY_LANG_KO);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] 권한을 올릴 수 없습니다", out);
+  TEST_ASSERT_STREQ("[HYL92] 권한을 올릴 수 없습니다", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_ES);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] No se pudieron elevar los privilegios", out);
+  TEST_ASSERT_STREQ("[HYL92] No se pudieron elevar los privilegios", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_PT_BR);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Não foi possível elevar os privilégios", out);
+  TEST_ASSERT_STREQ("[HYL92] Não foi possível elevar os privilégios", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_IT);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Impossibile elevare i privilegi", out);
+  TEST_ASSERT_STREQ("[HYL92] Impossibile elevare i privilegi", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_RU);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Не удалось повысить привилегии", out);
+  TEST_ASSERT_STREQ("[HYL92] Не удалось повысить привилегии", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_PL);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Nie udało się podnieść uprawnień", out);
+  TEST_ASSERT_STREQ("[HYL92] Nie udało się podnieść uprawnień", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_TH);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] ไม่สามารถยกระดับสิทธิ์ได้", out);
+  TEST_ASSERT_STREQ("[HYL92] ไม่สามารถยกระดับสิทธิ์ได้", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_NL);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Rechten konden niet worden verhoogd", out);
+  TEST_ASSERT_STREQ("[HYL92] Rechten konden niet worden verhoogd", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_TR);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Yetkiler yükseltilemedi", out);
+  TEST_ASSERT_STREQ("[HYL92] Yetkiler yükseltilemedi", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_VI);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Không nâng được quyền", out);
+  TEST_ASSERT_STREQ("[HYL92] Không nâng được quyền", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_UK);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Не вдалося підвищити права", out);
+  TEST_ASSERT_STREQ("[HYL92] Не вдалося підвищити права", out);
   onion_notify_set_language(ONION_NOTIFY_LANG_PT_PT);
   format_msg(out, sizeof(out), 1, "notify.priv.unable");
-  TEST_ASSERT_STREQ("[HyperHEN] Não foi possível elevar os privilégios", out);
+  TEST_ASSERT_STREQ("[HYL92] Não foi possível elevar os privilégios", out);
   return 0;
 }
 
@@ -280,13 +280,13 @@ static int test_notify_payload_localized(void) {
   onion_notify_set_language(ONION_NOTIFY_LANG_ZH_HANS);
 
   format_msg(out, sizeof(out), 1, "notify.payload.loading", "demo.elf");
-  TEST_ASSERT_STREQ("[HyperHEN] 正在加载 Payload demo.elf...", out);
+  TEST_ASSERT_STREQ("[HYL92] 正在加载 Payload demo.elf...", out);
 
   format_msg(out, sizeof(out), 1,
              "notify.payload.launched", "/data/demo.elf",
              "demo");
   TEST_ASSERT_STREQ(
-      "[HyperHEN] Payload 已启动\n路径：/data/demo.elf\n标识：demo", out);
+      "[HYL92] Payload 已启动\n路径：/data/demo.elf\n标识：demo", out);
 
   onion_notify_set_language(ONION_NOTIFY_LANG_EN);
   return 0;
@@ -337,11 +337,13 @@ static int test_notify_rich_formats_payload(void) {
 
 static int test_notify_rich_localizes_both_text_fields(void) {
   g_rich_payload[0] = '\0';
-  onion_notify_set_language(ONION_NOTIFY_LANG_ZH_HANS);
+  onion_notify_set_language(ONION_NOTIFY_LANG_EN);
   onion_notify_set_rich_send(capture_rich_notify);
-  onion_notify_rich("notify.brand", "notify.boot.starting", "/icon.png",
+  onion_notify_rich("notify.brand", "notify.linux.armed", "/icon.png",
                     "download", "43");
-  TEST_ASSERT_TRUE(strstr(g_rich_payload, "HyperHEN 正在启动...") != NULL);
+  TEST_ASSERT_TRUE(strstr(g_rich_payload,
+                          "HyperLinux armed. Fully reboot the PS5, "
+                          "then launch HyperHEN once.") != NULL);
   onion_notify_set_language(ONION_NOTIFY_LANG_EN);
   return 0;
 }
@@ -431,11 +433,11 @@ static int test_notify_try_rich_falls_back_on_empty_payload(void) {
   onion_notify_set_send(capture_plain_fallback);
   onion_notify_set_rich_send(fail_rich_notify);
 
-  onion_notify_try_rich(NULL, "notify.boot.welcome");
+  onion_notify_try_rich(NULL, "notify.boot.success");
 
   TEST_ASSERT_EQ_INT(0, g_rich_fail_calls);
   TEST_ASSERT_EQ_INT(1, g_plain_fallback_calls);
-  TEST_ASSERT_STREQ("Welcome to HyperHEN", g_plain_fallback_message);
+  TEST_ASSERT_STREQ("Welcome to HYL92", g_plain_fallback_message);
 
   onion_notify_set_send(NULL);
   onion_notify_set_rich_send(NULL);

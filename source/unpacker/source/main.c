@@ -29,7 +29,7 @@ int main(void) {
   const char *conflict = onion_conflict_detect();
   if (conflict) {
     LOG_ERROR("refusing start: %s already running", conflict);
-    onion_notify(0, "notify.boot.conflict", conflict);
+    onion_notify(0, "notify.boot.failed");
     return 0;
   }
 
@@ -39,7 +39,7 @@ int main(void) {
     return -1;
 
   if (!elfldr_remote_send_bytes_to(ELFLDR_REMOTE_PORT, elf, elf_size)) {
-    onion_notify(0, "notify.elfldr.need_9021");
+    onion_notify(0, "notify.boot.failed");
     free(elf);
     return -1;
   }

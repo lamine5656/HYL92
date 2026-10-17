@@ -11,7 +11,6 @@ extern "C" {
 typedef struct BootstrapConfig {
   uint32_t firmware_version;
   bool kstuff_autoload;
-  bool hype_voice;
 } BootstrapConfig;
 
 /** Configure notifications/logging and resolve the startup settings. */

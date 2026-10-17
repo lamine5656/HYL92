@@ -20,10 +20,10 @@ static uint8_t *decompress_bootstrapper(size_t *out_size) {
   case BOOTSTRAP_PAYLOAD_OK:
     break;
   case BOOTSTRAP_PAYLOAD_NOMEM:
-    onion_notify(0, "notify.boot.decompress_nomem");
+    onion_notify(0, "notify.boot.failed");
     return NULL;
   case BOOTSTRAP_PAYLOAD_LZMA:
-    onion_notify(0, "notify.boot.decompress_failed");
+    onion_notify(0, "notify.boot.failed");
     return NULL;
   case BOOTSTRAP_PAYLOAD_INVALID:
   default:

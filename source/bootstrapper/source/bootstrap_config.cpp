@@ -62,6 +62,5 @@ bool bootstrap_config_load(BootstrapConfig *config) {
 
   config->firmware_version = version.version;
   config->kstuff_autoload = settings.kstuff_autoload;
-  config->hype_voice = settings.hype_voice;
   return true;
 }

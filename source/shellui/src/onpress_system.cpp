@@ -103,26 +103,6 @@ static OnPressResult id_log_max_bytes(OnPressContext &ctx) {
   return OnPressResult::Handled;
 }
 
-static OnPressResult id_boot_thanks(OnPressContext &ctx) {
-  const bool enabled = value_as_int(ctx);
-  if (enabled == g_settings.show_boot_thanks) {
-    return OnPressResult::EarlyReturn;
-  }
-  g_settings.show_boot_thanks = enabled;
-  ctx.reload_main = true;
-  return OnPressResult::Handled;
-}
-
-static OnPressResult id_hype_voice(OnPressContext &ctx) {
-  const bool enabled = value_as_int(ctx);
-  if (enabled == g_settings.hype_voice) {
-    return OnPressResult::EarlyReturn;
-  }
-  g_settings.hype_voice = enabled;
-  ctx.reload_main = true;
-  return OnPressResult::Handled;
-}
-
 static OnPressResult id_debug_jb(OnPressContext &ctx) {
   if (atoi(ctx.value.c_str()) == g_settings.debug_app_jb_msg) {
     LOG_WARN("Debug JB already %s",
@@ -290,8 +270,6 @@ static const OnPressExactEntry kExact[] = {
     {"id_start_opt", id_start_opt},
     {"id_log_level", id_log_level},
     {"id_log_max_bytes", id_log_max_bytes},
-    {"id_boot_thanks", id_boot_thanks},
-    {"id_hype_voice", id_hype_voice},
     {"id_app_jailbreak_enabled", id_app_jailbreak_enabled},
     {"id_debug_jb", id_debug_jb},
     {"id_custom_game_opts", id_custom_game_opts},

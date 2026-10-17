@@ -331,11 +331,8 @@ int main() {
   const std::string welcome_toast_json = onion::daemon::make_welcome_toast_json(
       debug_settings_route.toolbox_uri(
           onion::debug_settings_route::UriKind::Simple));
-  onion_notify_try_rich(welcome_toast_json.c_str(), "notify.boot.welcome");
-  if (boot_settings.show_boot_thanks) {
-    onion_notify_debug(/*show_watermark=*/1, "notify.boot.thanks");
-  }
-  LOG_INFO("StartUp thread created!! - welcome to HyperHEN");
+  onion_notify_try_rich(welcome_toast_json.c_str(), "notify.boot.success");
+  LOG_INFO("StartUp thread created!! - welcome to HYL92");
 
   onion::daemon::apply_startup_destination(boot_settings);
 

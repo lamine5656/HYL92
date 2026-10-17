@@ -25,7 +25,6 @@ along with this program; see the file COPYING. If not, see
 #include "plugin_ui_bridge_client.hpp"
 #include "proc.h"
 #include "ps5/kernel.h"
-#include "startup_audio.h"
 #include "toolbox_i18n.hpp"
 #include "ucred.h"
 #include "webserver.hpp"
@@ -830,8 +829,6 @@ int main(int argc, char const* argv[]) {
    */
   shellui_request_home_reload();
   hooked = true;
-  if (g_settings.hype_voice && !shellui_play_startup_voice())
-    LOG_WARN("Startup voice unavailable from the SceShellUI audio context");
   run_keep_alive();
   return 0;
 }

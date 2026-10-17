@@ -38,7 +38,6 @@ static void close_logger(void) {
 
 void bootstrap_runtime_cleanup(void) {
   close_logger();
-  bootstrap_notify("notify.boot.cleaned_up");
   exit(0);
 }
 
@@ -48,7 +47,7 @@ bool bootstrap_runtime_prepare(void) {
 
   LOG_DEBUG("Jailbreaking the bootstrapper ...");
   if (elfldr_raise_privileges(getpid()) != 0) {
-    bootstrap_notify("notify.priv.unable");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
   LOG_DEBUG("   Success!");
@@ -58,14 +57,14 @@ bool bootstrap_runtime_prepare(void) {
 static int redirect_standard_streams(void) {
   g_logger_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (g_logger_fd < 0) {
-    bootstrap_notify("notify.net.socket_create", strerror(errno));
+    bootstrap_notify("notify.boot.failed");
     return -1;
   }
 
   int value = 1;
   if (setsockopt(g_logger_fd, SOL_SOCKET, SO_REUSEADDR, &value,
                  sizeof(value)) < 0) {
-    bootstrap_notify("notify.net.socket_options", strerror(errno));
+    bootstrap_notify("notify.boot.failed");
     close_logger();
     return -1;
   }
@@ -78,12 +77,12 @@ static int redirect_standard_streams(void) {
 
   if (bind(g_logger_fd, (struct sockaddr *)&server_addr,
            sizeof(server_addr)) != 0) {
-    bootstrap_notify("notify.net.socket_bind", strerror(errno));
+    bootstrap_notify("notify.boot.failed");
     close_logger();
     return -1;
   }
   if (listen(g_logger_fd, 1) != 0) {
-    bootstrap_notify("notify.net.socket_listen", strerror(errno));
+    bootstrap_notify("notify.boot.failed");
     close_logger();
     return -1;
   }
@@ -92,7 +91,7 @@ static int redirect_standard_streams(void) {
   socklen_t addr_len = sizeof(client_addr);
   const int connection = accept(g_logger_fd, &client_addr, &addr_len);
   if (connection < 0) {
-    bootstrap_notify("notify.net.socket_accept", strerror(errno));
+    bootstrap_notify("notify.boot.failed");
     close_logger();
     return -1;
   }

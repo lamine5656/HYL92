@@ -46,7 +46,7 @@ int main(void) {
   const char *conflict = onion_conflict_detect();
   if (conflict) {
     LOG_ERROR("refusing start: %s already running", conflict);
-    bootstrap_notify("notify.boot.conflict", conflict);
+    bootstrap_notify("notify.boot.failed", conflict);
     return 0;
   }
 
@@ -59,7 +59,7 @@ int main(void) {
     return -1;
 
   LOG_DEBUG("Writing embedded assets ...");
-  bootstrap_notify_starting(bootstrap_assets_write());
+  (void)bootstrap_assets_write();
   LOG_DEBUG("   Written!");
 
   const int linux_boot =
@@ -73,9 +73,6 @@ int main(void) {
       config.firmware_version, config.kstuff_autoload);
   if (launch_result < 0)
     return launch_result;
-
-  if (config.hype_voice)
-    LOG_DEBUG("Startup voice delegated to the SceShellUI audio context");
 
   if (launch_result == BOOTSTRAP_LAUNCH_FULL) {
     bootstrap_payload_autostart();

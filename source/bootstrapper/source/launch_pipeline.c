@@ -61,24 +61,23 @@ int bootstrap_linux_boot_if_armed(uint32_t firmware_version) {
     LOG_ERROR("HyperLinux marker rejected for unsupported firmware 0x%08x",
               firmware_version);
     (void)unlink(HYPERHEN_LINUX_BOOT_MARKER);
-    bootstrap_notify("notify.linux.unsupported");
+    bootstrap_notify("notify.boot.failed");
     return -1;
   }
 
   if (!elfldr_remote_available()) {
     LOG_ERROR("HyperLinux clean-boot handoff needs elfldr on port %u",
               ELFLDR_REMOTE_PORT);
-    bootstrap_notify("notify.elfldr.need_9021");
+    bootstrap_notify("notify.boot.failed");
     return -1;
   }
 
-  bootstrap_notify("notify.linux.starting");
   LOG_INFO("Launching embedded HyperLinux before HyperCore (%u bytes)",
            hyperlinux_size);
   if (!elfldr_remote_send_bytes_to(ELFLDR_REMOTE_PORT, hyperlinux_start,
                                    (size_t)hyperlinux_size)) {
     LOG_ERROR("Embedded HyperLinux handoff failed");
-    bootstrap_notify("notify.linux.launch_failed");
+    bootstrap_notify("notify.boot.failed");
     return -1;
   }
 
@@ -256,7 +255,7 @@ static bool wait_for_hypervisor_ready(void) {
     if (onion_ready_is_set(ONION_READY_HYPERVISOR))
       return true;
     if (onion_ready_is_set(ONION_READY_HYPERVISOR_FAILED)) {
-      bootstrap_notify("HyperHEN Hypervisor failed before completion");
+      bootstrap_notify("notify.boot.failed");
       return false;
     }
 
@@ -265,7 +264,7 @@ static bool wait_for_hypervisor_ready(void) {
         onion_proc_is_alive(armed_pid)) {
       missing_process_checks = 0;
     } else if (++missing_process_checks >= 10) {
-      bootstrap_notify("HyperHEN Hypervisor stopped before completion");
+      bootstrap_notify("notify.boot.failed");
       return false;
     }
     sleep(1);
@@ -387,7 +386,7 @@ static bool launch_hypervisor_5xx(LaunchContext *context) {
             context->loader_port);
   if (!launch_blob(context, hypervisor_5xx_start, (size_t)hypervisor_5xx_size,
                    "HyperHEN Byepervisor 5.xx", NULL)) {
-    bootstrap_notify("HyperHEN Byepervisor 5.xx could not be launched");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -401,7 +400,7 @@ static bool launch_legacy_hen(LaunchContext *context) {
             context->loader_port);
   if (!launch_blob(context, legacy_hen_start, (size_t)legacy_hen_size,
                    "HyperHEN legacy engine", NULL)) {
-    bootstrap_notify("HyperHEN legacy engine could not be launched");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -415,7 +414,7 @@ static bool launch_automount(LaunchContext *context) {
             context->loader_port);
   if (!launch_blob(context, automount_start, (size_t)automount_size,
                    "HyperHEN Automount", NULL)) {
-    bootstrap_notify("HyperHEN Automount could not be launched");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -423,7 +422,7 @@ static bool launch_automount(LaunchContext *context) {
                             ONION_READY_AUTOMOUNT_FAILED, 180000)) {
     if (!onion_ready_is_set(ONION_READY_AUTOMOUNT_FAILED))
       onion_ready_signal(ONION_READY_AUTOMOUNT_FAILED);
-    bootstrap_notify("HyperHEN Automount failed during initialization");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
   return true;
@@ -450,7 +449,7 @@ static bool launch_hypervisor(LaunchContext *context,
               context->loader_port);
     if (!launch_blob(context, hypervisor_start, (size_t)hypervisor_size,
                      "HyperHEN Hypervisor", NULL)) {
-      bootstrap_notify("HyperHEN Hypervisor could not be launched");
+      bootstrap_notify("notify.boot.failed");
       return false;
     }
   } else {
@@ -467,7 +466,7 @@ static bool launch_hypervisor(LaunchContext *context,
   }
   if (!onion_ready_is_set(ONION_READY_HYPERVISOR) &&
       !onion_ready_is_set(ONION_READY_HYPERVISOR_ARMED)) {
-    bootstrap_notify("HyperHEN Hypervisor did not arm");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -488,12 +487,11 @@ static void prepare_service_markers(void) {
 static bool launch_util(LaunchContext *context) {
   LOG_DEBUG("Starting util via %u ...", context->loader_port);
   if (!launch_blob(context, util_start, util_size, "util", "hyperhen_util.elf")) {
-    bootstrap_notify("notify.elfldr.launch_util");
     return false;
   }
   if (!onion_ready_wait(ONION_READY_UTIL, 15000, 200)) {
     LOG_ERROR("util did not publish readiness before timeout");
-    bootstrap_notify("HyperHEN utility stopped before initialization completed");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
   return true;
@@ -529,13 +527,12 @@ static bool launch_hypercore(LaunchContext *context,
   const bool sent = launch_blob(context, kstuff_start, (size_t)kstuff_size,
                                 "HyperCore", NULL);
   if (!sent) {
-    bootstrap_notify("notify.kstuff.load_elfldr_failed");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
   if (!wait_for_hypercore_ready(firmware_version)) {
-    bootstrap_notify("HyperCore stopped before completing its ShellCore "
-                     "initialization");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -543,7 +540,7 @@ static bool launch_hypercore(LaunchContext *context,
     LOG_ERROR("HyperCore published readiness without the mprotect capability");
     onion_ready_clear(ONION_READY_KSTUFF);
     onion_ready_signal(ONION_READY_KSTUFF_FAILED);
-    bootstrap_notify("HyperCore readiness verification failed");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -560,7 +557,7 @@ static bool prepare_hypercore_mode(uint32_t firmware_version) {
 
   if (!onion_ready_signal(ONION_READY_HYPERCORE_NO_PPR)) {
     LOG_ERROR("Cannot publish HyperCore no-PPR compatibility marker");
-    bootstrap_notify("HyperHEN compatibility mode could not be prepared");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
 
@@ -575,12 +572,11 @@ static bool launch_daemon(LaunchContext *context) {
             context->loader_port);
   if (!launch_blob(context, daemon_start, daemon_size, "daemon",
                    "hyperhen_daemon.elf")) {
-    bootstrap_notify("notify.elfldr.launch_daemon");
     return false;
   }
   if (!onion_ready_wait(ONION_READY_DAEMON, 20000, 200)) {
     LOG_ERROR("daemon did not publish readiness before timeout");
-    bootstrap_notify("HyperHEN daemon stopped before initialization completed");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
   return true;
@@ -590,7 +586,7 @@ static bool launch_hyperdpi(LaunchContext *context) {
   LOG_DEBUG("Starting embedded HyperDPI via %u ...", context->loader_port);
   if (!launch_blob(context, hyperdpi_start, (size_t)hyperdpi_size,
                    "HyperDPI", NULL)) {
-    bootstrap_notify("HyperDPI could not be launched");
+    bootstrap_notify("notify.boot.failed");
     return false;
   }
   return true;
@@ -605,13 +601,13 @@ int bootstrap_launch_services(uint32_t firmware_version, bool kstuff_autoload) {
   if (route == ONION_FIRMWARE_ROUTE_UNSUPPORTED) {
     LOG_ERROR("No exact HyperHEN route for firmware 0x%08x",
               firmware_version & 0xffff0000U);
-    bootstrap_notify("HyperHEN has no exact profile for this firmware");
+    bootstrap_notify("notify.boot.failed");
     return -3;
   }
 
   if (!elfldr_remote_available()) {
     LOG_DEBUG("FATAL: no elfldr on 127.0.0.1:9021");
-    bootstrap_notify("notify.elfldr.need_9021");
+    bootstrap_notify("notify.boot.failed");
     return -2;
   }
 
@@ -631,33 +627,30 @@ int bootstrap_launch_services(uint32_t firmware_version, bool kstuff_autoload) {
     LOG_WARN("FW 0x%08x has no complete HyperCore prerequisite route; "
              "running userland-only",
              firmware_version & 0xffff0000U);
-    bootstrap_notify("HyperHEN userland mode active\nHyperCore unavailable "
-                     "for this firmware");
     return BOOTSTRAP_LAUNCH_USERLAND_ONLY;
   }
 
   if ((capabilities & mount_stack_capabilities) !=
       mount_stack_capabilities) {
     LOG_ERROR("Firmware route lacks the required Automount/Backport stack");
-    bootstrap_notify("HyperHEN profile is missing Automount/Backport support");
+    bootstrap_notify("notify.boot.failed");
     return -3;
   }
 
   if (!claim_automount_ownership(&context)) {
-    bootstrap_notify("HyperHEN Automount could not claim mount ownership");
+    bootstrap_notify("notify.boot.failed");
     return -2;
   }
   if (firmware_uses_legacy_hen(firmware_version)) {
     if (!launch_legacy_hen(&context)) {
       release_automount_ownership(&context);
-      bootstrap_notify("HyperHEN legacy engine failed");
+      bootstrap_notify("notify.boot.failed");
       return -2;
     }
     if (!launch_automount(&context)) {
       release_automount_ownership(&context);
       return -2;
     }
-    bootstrap_notify("HyperHEN legacy engine is active");
     return 0;
   }
   if (!launch_util(&context)) {
@@ -667,7 +660,7 @@ int bootstrap_launch_services(uint32_t firmware_version, bool kstuff_autoload) {
   if (firmware_uses_hypervisor_5xx(firmware_version) &&
       !launch_hypervisor_5xx(&context)) {
     release_automount_ownership(&context);
-    bootstrap_notify("HyperHEN Byepervisor 5.xx failed");
+    bootstrap_notify("notify.boot.failed");
     return -2;
   }
   if (!launch_hypervisor(&context, firmware_version)) {
@@ -681,12 +674,10 @@ int bootstrap_launch_services(uint32_t firmware_version, bool kstuff_autoload) {
   if (!launch_hypercore(&context, firmware_version, kstuff_autoload)) {
     onion_ready_clear(ONION_READY_HYPERCORE_NO_PPR);
     release_automount_ownership(&context);
-    bootstrap_notify("HyperHEN Automount requires an active HyperCore");
+    bootstrap_notify("notify.boot.failed");
     return -2;
   }
   if (route == ONION_FIRMWARE_ROUTE_HYPERCORE_NO_PPR) {
-    bootstrap_notify("HyperHEN compatibility mode active\nPPR features are "
-                     "disabled");
   }
   if (!launch_automount(&context)) {
     release_automount_ownership(&context);

@@ -54,7 +54,7 @@ void onion_notify_format(char *out, size_t out_sz, int show_watermark,
   /* notify.* key → onion_notify_tr → printf-style body. */
   vsnprintf(buff, sizeof(buff), onion_notify_tr(fmt), ap);
   if (show_watermark) {
-    snprintf(out, out_sz, "[HyperHEN] %s", buff);
+    snprintf(out, out_sz, "[HYL92] %s", buff);
   } else {
     snprintf(out, out_sz, "%s", buff);
   }

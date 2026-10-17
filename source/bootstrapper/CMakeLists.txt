@@ -8,10 +8,6 @@ onion_module_prologue(C_STANDARD 11 CXX_STANDARD 20)
 set(D_CWD "${CMAKE_CURRENT_SOURCE_DIR}")
 onion_output_dirs()
 set(D_SRC ${D_CWD}/source)
-set(_hype_voice_pcm "${D_CWD}/assets/hyperhen_start.pcm")
-if(NOT EXISTS "${_hype_voice_pcm}")
-	message(FATAL_ERROR "Missing startup voice asset: ${_hype_voice_pcm}")
-endif()
 
 # SVG files remain the editable masters. The matching checked-in PNGs are
 # release assets so bootstrapper builds do not depend on an SVG renderer being
@@ -130,10 +126,6 @@ set_source_files_properties(
 	PROPERTIES OBJECT_DEPENDS
 		"${_hyperhen_daemon_elf};${_hyperhen_util_elf};${_hyperhen_elfldr_elf};${HYPERHEN_CORE_ELF};${_hyperhen_automount_elf};${_hyperhen_hypervisor_elf};${_hyperhen_hypervisor_5xx_elf};${_hyperhen_legacy_hen_elf};${_hyperhen_hyperdpi_elf};${_hyperhen_linux_elf};${_hyperhen_klogsrv_elf};${_hyperhen_ftpsrv_elf};${_hyperhen_debug_elfldr_elf};${D_CWD}/assets/hyperhen_sicon.png;${_generated_icon_files}"
 )
-set_source_files_properties(
-	${D_SRC}/bootstrap_audio_asset.c
-	PROPERTIES OBJECT_DEPENDS "${_hype_voice_pcm}"
-)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_DAEMON_ELF="${_hyperhen_daemon_elf}"
 	HYPERHEN_UTIL_ELF="${_hyperhen_util_elf}"
@@ -149,7 +141,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_FTPSRV_ELF="${_hyperhen_ftpsrv_elf}"
 	HYPERHEN_DEBUG_ELFLDR_ELF="${_hyperhen_debug_elfldr_elf}"
 	HYPERHEN_ICON_ASSET_DIR="${_icon_output_dir}"
-	HYPERHEN_HYPE_VOICE_PCM="${_hype_voice_pcm}"
 )
 # elfldr_raise_privileges from libonion_elfldr; launches go via elfldr_remote.c.
 onion_target_debug_define(${PROJECT_NAME})

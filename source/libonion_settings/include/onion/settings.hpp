@@ -279,12 +279,8 @@ struct AppJailbreakAllowlist {
 
 struct Settings {
   // [startup]
-  // Page to open after HyperHEN finishes loading.
+  // Page to open after the stack finishes loading.
   int startup_open_after_load = kStartupOpenNone;
-  // Show the final HyperHEN READY toast when HyperHEN starts.
-  bool show_boot_thanks = true;
-  // Play the embedded HyperHEN voice when the core is ready.
-  bool hype_voice = true;
 
   // [rest_mode]
   // Extra seconds after Rest Mode trophy SPRX are ready, before Toolbox inject.

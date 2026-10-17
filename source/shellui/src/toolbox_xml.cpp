@@ -802,11 +802,6 @@ void append_toolbox_preferences_group(ps5ui::Group& g) {
          toolbox_val("id_start_opt", "0"),
          toolbox_i18n::tr("startup.open_after_load.confirm"),
          toolbox_i18n::tr("startup.open_after_load.confirm_phrase"))
-      .toggle("id_boot_thanks", toolbox_i18n::tr("boot.thanks"),
-              toolbox_on("id_boot_thanks"), toolbox_i18n::tr("boot.thanks.sub"))
-      .toggle("id_hype_voice", toolbox_i18n::tr("boot.hype_voice"),
-              toolbox_on("id_hype_voice"),
-              toolbox_i18n::tr("boot.hype_voice.sub"))
       .list("id_ui_lang", toolbox_i18n::tr("lang.list"),
          [](ps5ui::ListBuilder& L) {
            L.item("id_ui_lang_system", toolbox_i18n::tr("lang.system"), "0")
@@ -942,11 +937,11 @@ void append_toolbox_about_group(ps5ui::Group& g) {
           "id_hyperhen_credits", toolbox_i18n::tr("about.credits"),
           [](ps5ui::Group& c) {
             const std::string ver =
-                std::string("★ HyperHEN ") + HYPERHEN_VERSION;
+                std::string("★ HYL92 ") + HYPERHEN_VERSION;
             c.label("id_about_version", ver, ps5ui::Style::Center)
-                .label("id_about_lineage", "HYPERHEN PROJECT",
+                .label("id_about_lineage", "HYL92 PROJECT",
                        ps5ui::Style::Center)
-                .label("id_about_lineage_1", "Coded by MICHELE MEDIA",
+                .label("id_about_lineage_1", "Lamine 5656 edition",
                        ps5ui::Style::Center)
                 .label("id_about_lineage_2",
                        "All-in-one runtime for PS5 homebrew",
@@ -960,7 +955,7 @@ void append_toolbox_about_group(ps5ui::Group& g) {
                 .label("id_about_donor_names",
                        "Automount and backport runtime",
                        ps5ui::Style::Center)
-                .label("id_about_testers", "HyperHEN Toolbox",
+                .label("id_about_testers", "HYL92 Toolbox",
                        ps5ui::Style::Center)
                 .label("id_about_testers_intro",
                        "Plugins, cheats and overlay",
@@ -996,7 +991,7 @@ void append_toolbox_about_group(ps5ui::Group& g) {
                        "Legacy HEN Core — exact 1.xx–4.51 profiles",
                        ps5ui::Style::Center)
                 .label("id_project_4",
-                       "HyperHEN Automount — mount and backport engine",
+                       "HYL92 Automount — mount and backport engine",
                        ps5ui::Style::Center)
                 .label("id_project_5",
                        "HyperDPI — embedded network package installer",
@@ -1005,7 +1000,7 @@ void append_toolbox_about_group(ps5ui::Group& g) {
                        "HyperLinux — embedded clean-boot Linux loader",
                        ps5ui::Style::Center)
                 .label("id_project_7",
-                       "HyperHEN Toolbox — ShellUI, plugins, cheats and overlay",
+                       "HYL92 Toolbox — ShellUI, plugins, cheats and overlay",
                        ps5ui::Style::Center)
                 .label("id_project_8",
                        "Runtime — PS5 Payload SDK / elfldr / libhijacker / NineS",
@@ -1027,7 +1022,7 @@ void generate_toolbox_xml(std::string& new_xml) {
   page.root_focus("id_group_pkg").root_icon(kIconHyperHen);
 
   page.label("id_hyperhen_visual_header",
-             std::string("HYPERCORE // ONLINE  •  ") + HYPERHEN_VERSION,
+             std::string("HYL92 // ONLINE  •  ") + HYPERHEN_VERSION,
              ps5ui::Style::Center, kIconHyperHen)
       .group(
           "id_group_pkg", toolbox_i18n::tr("group.pkg"),

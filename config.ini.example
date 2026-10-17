@@ -17,16 +17,9 @@ schema_version=1
 language=system
 
 [startup]
-# open_after_load chooses which page opens after HyperHEN finishes loading.
+# open_after_load chooses which page opens after the stack finishes loading.
 # Available values: none, home_menu
 open_after_load=none
-# hype_voice plays the same embedded “HyperHEN START!” cue for every system
-# language after the selected firmware engine is ready.
-# Available values: true, false
-hype_voice=true
-# show_thanks shows the final HyperHEN READY toast when HyperHEN starts.
-# Available values: true, false
-show_thanks=true
 
 [logging]
 # level controls how much HyperHEN records to its log files.

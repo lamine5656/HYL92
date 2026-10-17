@@ -735,10 +735,6 @@ bool apply_parser(IniParser *parser, Settings *out) {
   out->startup_open_after_load = parse_startup_open_after_load(
       ini_get(parser, "startup.open_after_load"),
       out->startup_open_after_load);
-  out->show_boot_thanks = parse_bool(ini_get(parser, "startup.show_thanks"),
-                                     out->show_boot_thanks);
-  out->hype_voice =
-      parse_bool(ini_get(parser, "startup.hype_voice"), out->hype_voice);
   out->log_level =
       parse_log_level(ini_get(parser, "logging.level"), out->log_level);
   out->log_max_bytes =
@@ -875,17 +871,11 @@ std::string settings_serialize(const Settings &in) {
   b += "language=" + std::string(language_name(in.ui_lang)) + "\n";
   b += "\n";
   b += "[startup]\n";
-  b += "# open_after_load chooses which page opens after HyperHEN finishes loading.\n";
+  b += "# open_after_load chooses which page opens after the stack finishes loading.\n";
   b += "# Available values: none, home_menu\n";
   b += "open_after_load=" +
        std::string(startup_open_after_load_name(in.startup_open_after_load)) +
        "\n";
-  b += "# show_thanks shows the final HyperHEN READY toast when HyperHEN starts.\n";
-  b += "# Available values: true, false\n";
-  b += "show_thanks=" + bool_text(in.show_boot_thanks) + "\n";
-  b += "# hype_voice plays the embedded startup voice after HyperCore is ready.\n";
-  b += "# Available values: true, false\n";
-  b += "hype_voice=" + bool_text(in.hype_voice) + "\n";
   b += "\n";
   b += "[logging]\n";
   b += "# level controls how much HyperHEN records to its log files.\n";

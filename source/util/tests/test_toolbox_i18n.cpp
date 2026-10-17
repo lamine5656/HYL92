@@ -57,16 +57,13 @@ static int test_default_zh(void) {
       std::strcmp(onion_notify_tr("notify.cheats.conflict"),
                   "%s 与 %s 冲突（%s）于 0x%s") == 0);
   TEST_ASSERT_TRUE(
-      std::strcmp(onion_notify_tr("notify.boot.made_by"),
-                  "%s · Coded by MICHELE MEDIA") == 0);
+      std::strcmp(onion_notify_tr("notify.boot.success"),
+                  "Welcome to HYL92") == 0);
   TEST_ASSERT_TRUE(
-      std::strcmp(onion_notify_tr("notify.boot.thanks"),
-                  "HyperHEN READY — UNLEASH THE POWER!") == 0);
-  TEST_ASSERT_TRUE(
-      std::strcmp(onion_notify_tr("notify.boot.conflict"),
-                  "HyperHEN 已拒绝启动：%s 正在运行") == 0);
+      std::strcmp(onion_notify_tr("notify.boot.failed"),
+                  "Retry to load HYL92") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.game_menu"),
-                               "★ HyperHEN 金手指") == 0);
+                               "★ HYL92 金手指") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.repo.download"),
                                "下载金手指合集") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.repo.download.desc"),

@@ -30,9 +30,6 @@ REQUIRED_TOKENS = {
         "plugins.link.sub": ("HyperCore",),
     },
     "notifications": {
-        # Startup branding is identical in every locale.
-        "notify.boot.made_by": ("MICHELE MEDIA",),
-        "notify.boot.thanks": ("HyperHEN READY",),
         "notify.kstuff.loading": ("HyperCore",),
         "notify.kstuff.load_failed": ("HyperCore",),
         "notify.kstuff.load_elfldr_failed": ("HyperCore",),
