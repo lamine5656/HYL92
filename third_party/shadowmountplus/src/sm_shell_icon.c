@@ -1,34 +1,20 @@
 #include "sm_platform.h"
 
-#include "sm_appdb.h"
-#include "sm_filesystem.h"
-#include "sm_install.h"
 #include "sm_limits.h"
 #include "sm_log.h"
 #include "sm_paths.h"
 #include "sm_shell_icon.h"
 
 #define SM_SHELL_ICON_TITLE_ID "FAKE10101"
-#define SM_SHELL_ICON_DIR APP_BASE "/" SM_SHELL_ICON_TITLE_ID
-#define SM_SHELL_ICON_SCE_SYS_DIR SM_SHELL_ICON_DIR "/sce_sys"
+#define SM_SHELL_ICON_SHORTCUT_TITLE_ID "NPXS40165"
+#define SM_SHELL_ICON_FAKE_DIR APP_BASE "/" SM_SHELL_ICON_TITLE_ID
+#define SM_SHELL_ICON_FAKE_SCE_SYS_DIR SM_SHELL_ICON_FAKE_DIR "/sce_sys"
+#define SM_HYL92_TITLE "\xe2\x98\x85 HYL92 Tools"
 
 extern unsigned char smp_icon_png[];
 extern unsigned int smp_icon_png_len;
 extern unsigned char assets_shell_icon_param_json[];
 extern unsigned int assets_shell_icon_param_json_len;
-
-static bool ensure_directory(const char *path) {
-  struct stat st;
-  if (stat(path, &st) == 0) {
-    if (S_ISDIR(st.st_mode))
-      return true;
-    errno = ENOTDIR;
-    return false;
-  }
-  if (errno != ENOENT)
-    return false;
-  return mkdir(path, 0755) == 0;
-}
 
 static bool install_asset(const char *path, const unsigned char *data,
                           size_t size) {
@@ -62,75 +48,164 @@ static bool install_asset(const char *path, const unsigned char *data,
   return false;
 }
 
-void sm_shell_icon_install_if_missing(void) {
-  /*
-   * Stage the HYL92 tile metadata on every boot, not only on first install.
-   * A tile left behind by an older automount keeps its old name and icon for
-   * as long as the title directory exists, so converge it to the current
-   * HYL92 branding every run.
-   */
-  if (!ensure_directory(SM_SHELL_ICON_DIR) ||
-      !ensure_directory(SM_SHELL_ICON_SCE_SYS_DIR)) {
-    log_debug("  [SHELLICON] failed to create app directory: %s",
-              strerror(errno));
-    return;
-  }
+static bool dir_exists(const char *path) {
+  struct stat st;
+  return stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
 
-  if (!install_asset(SM_SHELL_ICON_SCE_SYS_DIR "/icon0.png", smp_icon_png,
-                     (size_t)smp_icon_png_len)) {
-    log_debug("  [SHELLICON] failed to stage icon0.png: %s",
-              strerror(errno));
-    return;
-  }
-  if (!install_asset(SM_SHELL_ICON_SCE_SYS_DIR "/param.json",
-                     assets_shell_icon_param_json,
-                     (size_t)assets_shell_icon_param_json_len)) {
-    log_debug("  [SHELLICON] failed to stage param.json: %s",
-              strerror(errno));
-    return;
-  }
+static bool path_exists(const char *path) {
+  struct stat st;
+  return stat(path, &st) == 0 && S_ISREG(st.st_mode);
+}
 
-  /* Keep the registered appmeta mirrors in sync with the staged files; the
-   * home shelf reads its name/icon from these copies. */
-  bool appmeta_synced = true;
-  if (ensure_directory("/user/appmeta/" SM_SHELL_ICON_TITLE_ID)) {
-    static const char *const staged_names[] = {"icon0.png", "param.json"};
-    for (size_t i = 0; i < sizeof(staged_names) / sizeof(staged_names[0]);
-         ++i) {
-      char src_path[MAX_PATH];
-      char dst_path[MAX_PATH];
-      snprintf(src_path, sizeof(src_path), SM_SHELL_ICON_SCE_SYS_DIR "/%s",
-               staged_names[i]);
-      snprintf(dst_path, sizeof(dst_path), "/user/appmeta/" SM_SHELL_ICON_TITLE_ID "/%s",
-               staged_names[i]);
-      if (copy_file(src_path, dst_path) != 0) {
-        log_debug("  [SHELLICON] appmeta sync failed: %s -> %s", src_path,
-                  dst_path);
-        appmeta_synced = false;
-      }
+/*
+ * The wrench tile in the game shelf is the shortcut big app NPXS40165 left
+ * behind by an older HEN install. The shelf name and icon come straight from
+ * /user/appmeta/<TID>/, so converge any existing copy to the HYL92 branding
+ * every boot. Nothing is ever created: absent entries are skipped, so stray
+ * files cannot appear on clean installs and no duplicate tile is added.
+ */
+
+/* Replace every "titleName": "<old>" string with the HYL92 title. The new
+ * value is shorter than typical localized titles and contains no escapes, so
+ * the JSON stays valid. Returns whether any value was rewritten. */
+static bool patch_title_names(char *json, size_t capacity, size_t *len) {
+  const char key[] = "\"titleName\"";
+  const size_t key_len = sizeof(key) - 1;
+  const char value[] = "\"" SM_HYL92_TITLE "\"";
+  const size_t value_len = sizeof(value) - 1;
+  bool changed = false;
+  size_t offset = 0;
+
+  while (offset < *len) {
+    const char *hit =
+        (const char *)memchr(json + offset, key[0], *len - offset);
+    if (!hit)
+      return changed;
+    size_t pos = (size_t)(hit - json);
+    if (pos + key_len > *len || memcmp(json + pos, key, key_len) != 0) {
+      offset = pos + 1;
+      continue;
     }
+
+    size_t scan = pos + key_len;
+    while (scan < *len &&
+           (json[scan] == ' ' || json[scan] == '\t' || json[scan] == '\r' ||
+            json[scan] == '\n' || json[scan] == ':')) {
+      ++scan;
+    }
+    if (scan >= *len || json[scan] != '"') {
+      offset = pos + key_len;
+      continue;
+    }
+    ++scan; /* opening quote of the old value */
+    size_t end = scan;
+    while (end < *len && json[end] != '"') {
+      if (json[end] == '\\' && end + 1 < *len) {
+        ++end;
+      }
+      ++end;
+    }
+    if (end >= *len) {
+      offset = pos + key_len;
+      continue;
+    }
+
+    size_t head_len = scan; /* bytes before the old value, quote included */
+    size_t tail_len = *len - (end + 1);
+    if (head_len + value_len + tail_len + 1 > capacity) {
+      offset = pos + key_len;
+      continue;
+    }
+    memmove(json + head_len + value_len, json + end + 1, tail_len);
+    memcpy(json + head_len, value, value_len);
+    *len = head_len + value_len + tail_len;
+    json[*len] = '\0';
+    changed = true;
+    offset = head_len + value_len;
   }
 
-  if (is_installed(SM_SHELL_ICON_TITLE_ID)) {
-    log_debug("  [SHELLICON] refreshed HYL92 tile: %s (appmeta=%s)",
-              SM_SHELL_ICON_TITLE_ID, appmeta_synced ? "synced" : "stale");
-    invalidate_app_db_title_cache();
+  return changed;
+}
+
+static bool rebrand_appmeta_param(const char *title_id) {
+  char path[MAX_PATH];
+  snprintf(path, sizeof(path), APPMETA_BASE "/%s/param.json", title_id);
+
+  FILE *fp = fopen(path, "rb");
+  if (!fp)
+    return false;
+  struct stat st;
+  if (fstat(fileno(fp), &st) != 0 || st.st_size <= 0 ||
+      st.st_size > 64 * 1024) {
+    fclose(fp);
+    return false;
+  }
+
+  size_t capacity = (size_t)st.st_size + 64;
+  char *json = (char *)malloc(capacity);
+  if (!json) {
+    fclose(fp);
+    return false;
+  }
+
+  size_t len = fread(json, 1, (size_t)st.st_size, fp);
+  fclose(fp);
+  if (len == 0) {
+    free(json);
+    return false;
+  }
+
+  if (!patch_title_names(json, capacity, &len)) {
+    free(json);
+    log_debug("  [SHELLICON] %s param.json has no titleName to rebrand",
+              title_id);
+    return true;
+  }
+
+  if (!install_asset(path, (const unsigned char *)json, len)) {
+    free(json);
+    log_debug("  [SHELLICON] %s param.json rebrand failed: %s", title_id,
+              strerror(errno));
+    return false;
+  }
+  free(json);
+  log_debug("  [SHELLICON] %s param.json rebranded to \"" SM_HYL92_TITLE "\"",
+            title_id);
+  return true;
+}
+
+static void converge_appmeta_tiles(const char *title_id) {
+  char dir[MAX_PATH];
+  char path[MAX_PATH];
+  snprintf(dir, sizeof(dir), APPMETA_BASE "/%s", title_id);
+  if (!dir_exists(dir)) {
     return;
   }
 
-  int result = 0;
-  if (!sm_install_register_title_dir(SM_SHELL_ICON_TITLE_ID, APP_BASE "/",
-                                     &result)) {
-    log_debug("  [SHELLICON] AppInstallTitleDir unavailable");
-    return;
+  snprintf(path, sizeof(path), "%s/icon0.png", dir);
+  if (path_exists(path) &&
+      install_asset(path, smp_icon_png, (size_t)smp_icon_png_len)) {
+    log_debug("  [SHELLICON] %s icon0.png -> \"" SM_HYL92_TITLE "\"", title_id);
   }
 
-  if (result != 0 && (uint32_t)result != 0x80990002u) {
-    log_debug("  [SHELLICON] registration failed: code=0x%08X",
-              (uint32_t)result);
-    return;
+  /* Legacy FAKE10101 tiles stage the whole param copy from our asset; the
+   * real shortcut big app keeps its own JSON and gets an in-place rebrand. */
+  if (strcmp(title_id, SM_SHELL_ICON_TITLE_ID) == 0) {
+    snprintf(path, sizeof(path), "%s/param.json", dir);
+    install_asset(path, assets_shell_icon_param_json,
+                  (size_t)assets_shell_icon_param_json_len);
+  } else {
+    (void)rebrand_appmeta_param(title_id);
   }
+}
 
-  invalidate_app_db_title_cache();
-  log_debug("  [SHELLICON] installed: %s", SM_SHELL_ICON_TITLE_ID);
+void sm_shell_icon_install_if_missing(void) {
+  converge_appmeta_tiles(SM_SHELL_ICON_SHORTCUT_TITLE_ID);
+  /* Older installs sometimes named the fake tile FAKE10101; rebrand that
+   * copy too whenever it exists, but never stage a fresh one. */
+  if (dir_exists(SM_SHELL_ICON_FAKE_DIR) ||
+      dir_exists(APPMETA_BASE "/" SM_SHELL_ICON_TITLE_ID)) {
+    converge_appmeta_tiles(SM_SHELL_ICON_TITLE_ID);
+  }
 }
