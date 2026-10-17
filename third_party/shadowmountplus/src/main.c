@@ -653,7 +653,6 @@ int main(void) {
               strerror(errno));
   else if (!sm_shellcore_hooks_start()) {
     log_debug("  [SHELLCORE] lifecycle hooks unavailable; stock behavior kept");
-    notify_system_l10n(SM_L10N_SHELLCORE_HOOKS_FAILED);
   }
   if (startup_cfg.api_enabled)
     sm_shell_icon_install_if_missing();
@@ -672,23 +671,10 @@ int main(void) {
     log_debug("  [MOUNT] remount_system_ex failed: %s", strerror(errno));
   }
 
-  if (startup_cfg.api_enabled) {
-    char web_address[MAX_API_BIND_ADDRESS];
-    resolve_web_interface_address(startup_cfg.api_bind_address, web_address,
-                                  sizeof(web_address));
-    notify_system_l10n(SM_L10N_STARTUP_WEB, web_address,
-                       startup_cfg.api_port);
-  } else {
-    notify_system_l10n(SM_L10N_STARTUP);
-  }
+  /* HYL92: no startup toast from the automount service. */
   log_non_empty_scan_paths();
 
-  if (runtime_config().legacy_recursive_scan_forced) {
-    notify_system_info_l10n(SM_L10N_RECURSIVE_SCAN_DEPRECATED);
-  } else if (runtime_config().scan_depth > 1u) {
-    notify_system_info_l10n(SM_L10N_SCAN_DEPTH_ENABLED,
-                            runtime_config().scan_depth);
-  }
+  /* HYL92: config notices stay in debug.log only. */
 
   cleanup_mount_dirs();
   if (!wait_for_lvd_release()) {

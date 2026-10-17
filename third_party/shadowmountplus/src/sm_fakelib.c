@@ -1746,7 +1746,7 @@ static bool mount_fakelib_for_game_locked(pid_t pid, const char *title_id,
       if (pid > 0)
         g_fakelib_mount.notify_pending = false;
       if (notify) {
-        notify_system_info_l10n(g_fakelib_mount.notification, title_id);
+        /* HYL92: fakelib application toast removed. */
       }
       return true;
     }
@@ -1873,8 +1873,7 @@ static bool mount_fakelib_for_game_locked(pid_t pid, const char *title_id,
   }
   g_fakelib_mount.mounts_ready = true;
 
-  if (notify_applied && notify_user)
-    notify_system_info_l10n(g_fakelib_mount.notification, title_id);
+  /* HYL92: fakelib application toast removed. */
   return true;
 }
 

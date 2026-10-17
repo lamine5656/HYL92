@@ -229,9 +229,7 @@ static void init_runtime_config_defaults(runtime_config_state_t *state) {
   memset(state, 0, sizeof(*state));
   state->cfg.api_enabled = true;
   state->cfg.debug_enabled = true;
-  /* HYL92: the automount service stays fully silent by default; only HYL92
-   * core success/failure toasts are shown. Re-enable via config.ini. */
-  state->cfg.quiet_mode = true;
+  state->cfg.quiet_mode = false;
   state->cfg.mount_read_only = (IMAGE_MOUNT_READ_ONLY != 0);
   state->cfg.force_mount = false;
   state->cfg.persistent_image_mounts = false;

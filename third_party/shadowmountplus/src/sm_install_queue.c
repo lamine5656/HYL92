@@ -234,7 +234,6 @@ static void finalize_pending_install_success(pending_install_entry_t *entry) {
     return;
 
   log_debug("  [REG] Installed: %s (%s)", entry->title_name, entry->title_id);
-  notify_game_installed_rich(entry->title_id);
   if (entry->has_src_snd0) {
     int snd0_updates = update_snd0info(entry->title_id);
     if (snd0_updates >= 0)
@@ -405,7 +404,7 @@ static void notify_queued_install_batch(void) {
     }
   }
 
-  notify_system_info("%s", message);
+  /* HYL92: batch-queued toast removed (debug.log keeps the list). */
   g_queued_install_batch_announced = true;
 }
 

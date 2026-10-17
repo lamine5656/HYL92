@@ -368,8 +368,7 @@ static bool mount_and_install(const char *src_path, const char *title_id,
     invalidate_app_db_title_cache();
     clear_register_attempts(title_id);
     log_debug("  [REG] Installed NEW!");
-    notify_game_installed_rich(title_id);
-    if (has_src_snd0)
+      if (has_src_snd0)
       update_registered_title_snd0info(title_id);
   } else if ((uint32_t)res == 0x80990002u) {
     invalidate_app_db_title_cache();
@@ -408,10 +407,6 @@ void process_scan_candidates(const scan_candidate_t *candidates,
       log_debug("  [ACTION] Remounting: %s", c->title_name);
     } else {
       log_debug("  [ACTION] Installing: %s (%s)", c->title_name, c->title_id);
-      if (!use_app_install_all) {
-        notify_system_info_l10n(SM_L10N_INSTALLING, c->title_name,
-                                c->title_id);
-      }
     }
 
     bool mounted = mount_and_install(c->path, c->title_id, c->title_name,

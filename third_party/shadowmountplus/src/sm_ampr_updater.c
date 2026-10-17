@@ -923,7 +923,7 @@ static void *ampr_updater_thread_main(void *unused) {
     if (result == AMPR_UPDATE_REPLACED) {
       log_debug("  [AMPR] emulator updated: %s/%s", snapshot.emulators_path,
                 AMPR_FILE_NAME);
-      notify_system_l10n(SM_L10N_AMPR_EMULATOR_UPDATED);
+      /* HYL92: emulator-updated toast removed. */
     } else if (result == AMPR_UPDATE_UNCHANGED) {
       log_debug("  [AMPR] emulator is already current");
     }

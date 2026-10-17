@@ -57,7 +57,6 @@ static int apply_fan_target(uint8_t target_c,
 }
 
 void sm_fan_apply_game_target(const char *title_id) {
-  static bool target_notification_sent = false;
 
   uint32_t target_c = runtime_config().fan_target_temperature_c;
   if (target_c == FAN_TARGET_TEMPERATURE_SYSTEM)
@@ -78,9 +77,4 @@ void sm_fan_apply_game_target(const char *title_id) {
               (unsigned)previous_target, (unsigned)target_c);
   }
 
-  if (!target_notification_sent) {
-    target_notification_sent = true;
-    notify_system_info_l10n(SM_L10N_TEMPERATURE_TRANSITION,
-                            (unsigned)previous_target, (unsigned)target_c);
-  }
 }

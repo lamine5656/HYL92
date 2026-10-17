@@ -65,8 +65,6 @@ static bool ensure_notification_icon_present(void) {
 }
 
 void sm_notifications_init(void) {
-  if (runtime_config().quiet_mode)
-    return; /* HYL92: never create the toast icon when fully silent. */
   pthread_mutex_lock(&g_notifications_mutex);
   if (!g_notifications_initialized)
     g_notifications_initialized = ensure_notification_icon_present();
@@ -415,9 +413,6 @@ void sm_error_mark_notified(void) {
 }
 
 void notify_system(const char *fmt, ...) {
-  if (runtime_config().quiet_mode)
-    return;
-
   va_list args;
   va_start(args, fmt);
   notify_system_plain_v(fmt, args);
@@ -425,9 +420,6 @@ void notify_system(const char *fmt, ...) {
 }
 
 void notify_system_l10n(sm_l10n_key_t key, ...) {
-  if (runtime_config().quiet_mode)
-    return;
-
   va_list args;
   va_start(args, key);
   notify_system_plain_l10n_v(key, args);

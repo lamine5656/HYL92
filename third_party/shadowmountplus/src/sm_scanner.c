@@ -279,7 +279,6 @@ static bool notify_scanner_usb_mount_change(const char *path, bool force_refresh
               usb_root, (unsigned long long)capacity_bytes,
               (unsigned long long)available_bytes,
               (unsigned long long)block_size);
-    notify_system_info_l10n(SM_L10N_USB_CONNECTED, usb_root);
     return true;
   }
 
@@ -289,7 +288,6 @@ static bool notify_scanner_usb_mount_change(const char *path, bool force_refresh
   memset(&g_scanner_usb_info[slot], 0, sizeof(g_scanner_usb_info[slot]));
   sm_fakelib_game_on_usb_mount_change(usb_root, false);
   log_debug("[SCAN] USB storage disconnected: %s", usb_root);
-  notify_system_info_l10n(SM_L10N_USB_DISCONNECTED, usb_root);
   return false;
 }
 
@@ -1059,19 +1057,8 @@ static void notify_scanner_usb_scan_complete(int slot) {
   g_scanner_usb_scan_result_pending_mask &= (uint8_t)~slot_mask;
   log_debug("[SCAN] USB storage scan complete: %s games=%d", usb_root,
             game_count);
-  const scanner_usb_info_t *info = &g_scanner_usb_info[slot];
-  const char *cluster_recommendation =
-      info->block_size_bytes <= SCANNER_MAX_RECOMMENDED_CLUSTER_SIZE_BYTES
-          ? ""
-          : sm_l10n_get(SM_L10N_USB_CLUSTER_RECOMMENDATION);
-  notify_system_info_l10n(
-      SM_L10N_USB_CONNECTED_SCANNING, usb_root,
-      (unsigned long long)(info->available_tenths / 10ull),
-      (unsigned long long)(info->available_tenths % 10ull),
-      (unsigned long long)(info->capacity_tenths / 10ull),
-      (unsigned long long)(info->capacity_tenths % 10ull),
-      (unsigned long long)((info->block_size_bytes + 1023ull) / 1024ull),
-      game_count, cluster_recommendation);
+  /* HYL92: USB scan toast removed. */
+
 }
 
 static void schedule_pending_scanner_usb_scans(uint64_t now_us) {
@@ -1397,8 +1384,7 @@ static bool run_full_scan_cycle_impl(bool startup_sync, const char *reason,
       if (!candidates[i].installed)
         new_games++;
     }
-    if (new_games > 0)
-      notify_system_info_l10n(SM_L10N_FOUND_NEW_GAMES, new_games);
+    (void)new_games; /* HYL92: found-new-games toast removed. */
   }
 
   process_scan_candidates(candidates, candidate_count);
@@ -1413,9 +1399,7 @@ static bool run_full_scan_cycle_impl(bool startup_sync, const char *reason,
   if (unstable_found_out)
     *unstable_found_out = unstable_found;
 
-  if (startup_sync && !should_abort_scan_cycle()) {
-    notify_system_rich_l10n(true, SM_L10N_LIBRARY_SYNCED, total_found_games);
-  }
+  (void)total_found_games; /* HYL92: library-synced toast removed. */
 
   return !should_abort_scan_cycle();
 }
@@ -2202,8 +2186,7 @@ void sm_scanner_run_loop(void) {
           return;
         }
         sm_l10n_init();
-        notify_system_l10n(SM_L10N_CONFIG_RELOADED);
-        log_debug("  [CFG] runtime config reloaded");
+              log_debug("  [CFG] runtime config reloaded");
         now_us = monotonic_time_us();
         next_full_resync_us =
             scan_topology_changed ? now_us
