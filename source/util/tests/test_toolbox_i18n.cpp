@@ -13,7 +13,7 @@ using namespace toolbox_i18n;
 
 static int test_default_zh(void) {
   set_lang(Lang::ZhHans);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("group.pkg"), "内容安装与管理") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("group.game"), "游戏辅助") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("group.game.sub"),
@@ -76,7 +76,7 @@ static int test_default_zh(void) {
 
 static int test_en(void) {
   set_lang(Lang::En);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("group.pkg"), "Content Install & Management") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("group.game"), "Game Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("group.game.sub"),
@@ -154,7 +154,7 @@ static int test_en(void) {
 
 static int test_ar(void) {
   set_lang(Lang::Ar);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.ar"), "العربية") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
                                "تفعيل/تعطيل %s لـ %s") == 0);
@@ -165,7 +165,7 @@ static int test_ar(void) {
 
 static int test_zh_hant(void) {
   set_lang(Lang::ZhHant);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "金手指") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("startup.home_menu"), "主畫面") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -175,7 +175,7 @@ static int test_zh_hant(void) {
 
 static int test_ja(void) {
   set_lang(Lang::Ja);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") ==
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") ==
                    0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "チート") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.ja"), "日本語") == 0);
@@ -186,7 +186,7 @@ static int test_ja(void) {
 
 static int test_fr(void) {
   set_lang(Lang::Fr);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") ==
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") ==
                    0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Codes de triche") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.fr"), "Français") == 0);
@@ -197,7 +197,7 @@ static int test_fr(void) {
 
 static int test_de(void) {
   set_lang(Lang::De);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Cheats") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.de"), "Deutsch") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -207,7 +207,7 @@ static int test_de(void) {
 
 static int test_ko(void) {
   set_lang(Lang::Ko);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "치트") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.ko"), "한국어") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -218,7 +218,7 @@ static int test_ko(void) {
 static int test_es(void) {
   set_lang(Lang::Es);
   TEST_ASSERT_TRUE(
-      std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+      std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Trucos") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.es"), "Español") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -229,7 +229,7 @@ static int test_es(void) {
 static int test_pt_br(void) {
   set_lang(Lang::PtBr);
   TEST_ASSERT_TRUE(
-      std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+      std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Cheats") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.pt_br"), "Português (Brasil)") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -240,7 +240,7 @@ static int test_pt_br(void) {
 static int test_it(void) {
   set_lang(Lang::It);
   TEST_ASSERT_TRUE(
-      std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+      std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Trucchi") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.it"), "Italiano") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -256,7 +256,7 @@ static int test_it(void) {
 
 static int test_ru(void) {
   set_lang(Lang::Ru);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Читы") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.ru"), "Русский") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -266,7 +266,7 @@ static int test_ru(void) {
 
 static int test_pl(void) {
   set_lang(Lang::Pl);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "Cheaty") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.pl"), "Polski") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -276,7 +276,7 @@ static int test_pl(void) {
 
 static int test_th(void) {
   set_lang(Lang::Th);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.link"), "สูตรโกง") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.th"), "ไทย") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
@@ -463,7 +463,7 @@ static int test_format(void) {
 
 static int test_nl(void) {
   set_lang(Lang::Nl);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.nl"), "Nederlands") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("cheats.enable_fmt"),
                                "%s voor %s in-/uitschakelen") == 0);
@@ -472,21 +472,21 @@ static int test_nl(void) {
 
 static int test_tr(void) {
   set_lang(Lang::Tr);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.tr"), "Türkçe") == 0);
   return 0;
 }
 
 static int test_vi(void) {
   set_lang(Lang::Vi);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.vi"), "Tiếng Việt") == 0);
   return 0;
 }
 
 static int test_uk(void) {
   set_lang(Lang::Uk);
-  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+  TEST_ASSERT_TRUE(std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.uk"), "Українська") == 0);
   return 0;
 }
@@ -494,7 +494,7 @@ static int test_uk(void) {
 static int test_pt_pt(void) {
   set_lang(Lang::PtPt);
   TEST_ASSERT_TRUE(
-      std::strcmp(tr("root.title"), "★HyperHEN Tools") == 0);
+      std::strcmp(tr("root.title"), "★HYL92 Tools") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("lang.pt"), "Português (Portugal)") == 0);
   TEST_ASSERT_TRUE(std::strcmp(tr("account.user_fmt"), "Utilizador: %s") == 0);
   return 0;
