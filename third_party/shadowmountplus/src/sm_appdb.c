@@ -310,6 +310,66 @@ bool app_db_rebrand_debug_settings_titles(void) {
   return true;
 }
 
+/*
+ * The home shelf has no explicit pin: tiles sort by lastAccessIndex
+ * (most recently used first), so a shortcut card sinks whenever the user
+ * plays something. Repin every entry of kPinnedTitles by pushing its
+ * lastAccessIndex above every other row, in both per-user icon tables and
+ * the concept row. Repeated busy-wait retries absorb the shell's traffic.
+ * Add or remove title ids in kPinnedTitles to change what stays on top.
+ */
+static const char *const kPinnedTitles[] = {"NPXS40165"};
+
+static const char *const kRepinOrderByUser[] = {
+    "0395971800",
+    "0395971801",
+};
+
+bool app_db_repin_shelf_first(void) {
+  bool ok = true;
+  int repinned = 0;
+  for (size_t t = 0; t < sizeof(kPinnedTitles) / sizeof(kPinnedTitles[0]);
+       ++t) {
+    char sql[512];
+    for (size_t i = 0;
+         ok && i < sizeof(kRepinOrderByUser) / sizeof(kRepinOrderByUser[0]);
+         ++i) {
+      snprintf(sql, sizeof(sql),
+               "UPDATE tbl_iconinfo_%s SET "
+               "lastAccessIndex=(SELECT COALESCE(MAX(lastAccessIndex),0)+1 "
+               "FROM tbl_iconinfo_%s), "
+               "lastAccessTime=datetime('now','localtime') "
+               "WHERE titleId='%s';",
+               kRepinOrderByUser[i], kRepinOrderByUser[i], kPinnedTitles[t]);
+      int changes = 0;
+      if (!app_db_exec_with_retry(sql, APP_DB_UPDATE_BUSY_RETRIES,
+                                  "shelf repin iconinfo", &changes)) {
+        ok = false;
+        break;
+      }
+      repinned += changes;
+    }
+    if (ok) {
+      snprintf(sql, sizeof(sql),
+               "UPDATE tbl_conceptmetadata SET "
+               "lastAccessIndex=(SELECT COALESCE(MAX(lastAccessIndex),0)+1 "
+               "FROM tbl_conceptmetadata), "
+               "lastAccessTime=datetime('now','localtime') "
+               "WHERE conceptId LIKE '%%%s%%';",
+               kPinnedTitles[t]);
+      int changes = 0;
+      if (!app_db_exec_with_retry(sql, APP_DB_UPDATE_BUSY_RETRIES,
+                                  "shelf repin concept", &changes)) {
+        ok = false;
+      }
+      repinned += changes;
+    }
+  }
+  if (repinned > 0)
+    log_debug("  [DB] shelf repin done rows=%d", repinned);
+  return ok;
+}
+
 static int app_db_update_title(const char *title_id, const char *sql,
                                const char *label) {
   int result = -1;

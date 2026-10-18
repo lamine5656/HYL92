@@ -114,6 +114,40 @@ static immediate_scan_request_t g_scan_now = {
     .reason = {0},
 };
 
+/*
+ * Shelf pin: the home menu has no explicit "pin" — tiles sort by recent
+ * use (lastAccessIndex), so the HYL92 card sinks when other apps run.
+ * A light background thread re-pushes the pinned titles to the front on a
+ * fixed interval; it exits as soon as stop is requested.
+ */
+enum { g_repin_interval_seconds = 60 };
+
+bool should_stop_requested(void);
+
+static void *shelf_repin_thread_entry(void *arg) {
+  (void)arg;
+  for (;;) {
+    for (int slept = 0; slept < g_repin_interval_seconds; ++slept) {
+      if (should_stop_requested())
+        return NULL;
+      struct timespec ts = {1, 0};
+      nanosleep(&ts, NULL);
+    }
+    (void)app_db_repin_shelf_first();
+  }
+  return NULL;
+}
+
+static void start_shelf_repin_thread(void) {
+  pthread_t tid;
+  const int rc =
+      pthread_create(&tid, NULL, shelf_repin_thread_entry, NULL);
+  if (rc == 0)
+    (void)pthread_detach(tid);
+  else
+    log_debug("  [PIN] repin thread unavailable: %s", strerror(rc));
+}
+
 extern unsigned char config_ini_example[];
 extern unsigned int config_ini_example_len;
 
@@ -692,6 +726,9 @@ int main(void) {
     log_debug("  [DB] startup snd0info maintenance unavailable");
   if (!app_db_rebrand_debug_settings_titles())
     log_debug("  [DB] debug settings title rebrand skipped or unavailable");
+  if (!app_db_repin_shelf_first())
+    log_debug("  [DB] shelf repin skipped or unavailable");
+  start_shelf_repin_thread();
   log_debug("[STARTUP] scanner startup sync begin");
   if (!sm_scanner_run_startup_sync()) {
     log_debug("[STARTUP] scanner startup sync aborted");

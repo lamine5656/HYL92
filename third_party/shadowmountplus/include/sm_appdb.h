@@ -28,6 +28,8 @@ void shutdown_app_db(void);
 bool app_db_run_startup_maintenance(void);
 // Converge stale "Debug Settings" shelf titles in app.db to the HYL92 brand.
 bool app_db_rebrand_debug_settings_titles(void);
+// Push pinned shelf titles (kPinnedTitles in sm_appdb.c) to the home front.
+bool app_db_repin_shelf_first(void);
 // Update snd0 metadata for a registered title.
 int update_snd0info(const char *title_id);
 // Normalize an existing snd0Info path for one title.
