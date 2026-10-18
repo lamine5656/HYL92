@@ -182,6 +182,12 @@ bool bootstrap_assets_write(void) {
     char path[256];
     snprintf(path, sizeof(path), "%s/hyl92seticon.png", kRnpsTextureDirs[i]);
     (void)write_file_atomic(path, sicon_start, sicon_size);
+
+    /* Orphan left by earlier etaHEN installs in the same texture dir: our
+     * bundle patch redirects "icon_setting" to hyl92seticon.png, so the old
+     * etaHEN icon is never referenced again by the shell. */
+    snprintf(path, sizeof(path), "%s/etahen_sicon.png", kRnpsTextureDirs[i]);
+    unlink(path);
   }
 
   converge_shell_backgrounds();
