@@ -7,10 +7,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 
 extern uint8_t sicon_start[];
 extern const unsigned int sicon_size;
+extern uint8_t hyl92_bg_start[];
+extern const unsigned int hyl92_bg_size;
 extern uint8_t klogsrv_start[];
 extern const unsigned int klogsrv_size;
 extern uint8_t ftpsrv_start[];
@@ -36,13 +40,65 @@ static const EmbeddedIcon kEmbeddedIcons[] = {
 #undef ONION_ICON
 };
 
+/*
+ * Stock shell backgrounds replanted with the HYL92 gothic artwork. The
+ * console stores these as 1920x1080 BGRA8888 DDS (8 294 548 bytes on disk
+ * for every target below; bg_NPXS40053.dds is a different layout and must
+ * stay untouched). The size gate below skips any store that does not match
+ * byte-for-byte, so unknown/future formats are left alone automatically.
+ * Targets are compared before writing so a converged console boots without
+ * re-flashing the whole /system_ex tree on every start.
+ */
+static const char *const kShellBackgrounds[] = {
+    "/system_ex/vsh_asset/bg_hub_default.dds",
+    "/system_ex/vsh_asset/bg_image_load_error.dds",
+    "/system_ex/vsh_asset/bg_NPXS40032.dds",
+    "/system_ex/vsh_asset/bg_NPXS40037.dds",
+    "/system_ex/vsh_asset/bg_NPXS40047.dds",
+    "/system_ex/vsh_asset/bg_NPXS40054.dds",
+    "/system_ex/vsh_asset/bg_NPXS40056.dds",
+    "/system_ex/vsh_asset/bg_NPXS40063.dds",
+    "/system_ex/vsh_asset/bg_NPXS40071.dds",
+    "/system_ex/vsh_asset/bg_NPXS40075.dds",
+    "/system_ex/vsh_asset/bg_NPXS40080.dds",
+    "/system_ex/vsh_asset/bg_NPXS40110.dds",
+    "/system_ex/vsh_asset/bg_NPXS40139.dds",
+    "/system_ex/vsh_asset/bg_NPXS40144.dds",
+    "/system_ex/vsh_asset/bg_NPXS40154.dds",
+};
+
+static void converge_shell_backgrounds(void) {
+  const size_t kExpectedSize = 148 + (size_t)1920 * 1080 * 4;
+  if ((size_t)hyl92_bg_size != kExpectedSize) {
+    return;
+  }
+  for (size_t i = 0;
+       i < sizeof(kShellBackgrounds) / sizeof(kShellBackgrounds[0]); ++i) {
+    struct stat st;
+    const char *path = kShellBackgrounds[i];
+    if (stat(path, &st) != 0 || !S_ISREG(st.st_mode) ||
+        st.st_size != (long long)hyl92_bg_size) {
+      continue;
+    }
+    uint8_t *current = NULL;
+    size_t current_size = 0;
+    if (read_file_alloc(path, (size_t)hyl92_bg_size, &current, &current_size) &&
+        current_size == (size_t)hyl92_bg_size &&
+        memcmp(current, hyl92_bg_start, (size_t)hyl92_bg_size) == 0) {
+      free(current);
+      continue;
+    }
+    free(current);
+    (void)write_file_atomic(path, hyl92_bg_start, (size_t)hyl92_bg_size);
+  }
+}
+
 bool bootstrap_assets_write(void) {
   mkdir("/data/HyperHEN", 0777);
   mkdir("/data/HyperHEN/assets", 0777);
   mkdir("/data/HyperHEN/tools", 0777);
   mkdir("/user/data", 0777);
   mkdir("/user/data/HyperHEN", 0777);
-
   const bool startup_icon_ready = write_file_atomic(
       ONION_NOTIFY_ICON_PATH, sicon_start, sicon_size);
 
@@ -90,6 +146,8 @@ bool bootstrap_assets_write(void) {
     snprintf(path, sizeof(path), "%s/hyl92seticon.png", kRnpsTextureDirs[i]);
     (void)write_file_atomic(path, sicon_start, sicon_size);
   }
+
+  converge_shell_backgrounds();
 
   /*
    * Prefer the HYL92 skull on any stock system asset that already exists;

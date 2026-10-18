@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>★ HYL92 — Aperçu fond Toolbox</title>
+<style>
+  :root {
+    --cyan: #38f0ff;
+    --magenta: #d64bff;
+    --panel: rgba(6, 12, 26, 0.86);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: #05070d;
+    color: #eaf2ff;
+    font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+    padding: 28px 16px 40px;
+  }
+  h1 { font-size: 20px; font-weight: 600; letter-spacing: .04em; }
+  h1 span { color: var(--cyan); }
+  p.note { color: #8fa3c4; font-size: 13px; max-width: 980px; text-align: center; }
+  .tv {
+    width: min(1180px, 96vw);
+    aspect-ratio: 16 / 9;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, .65);
+    border: 1px solid #16233d;
+    position: relative;
+    background: url("../branding/background_gothic.png") center 38% / cover no-repeat;
+  }
+  /* readability overlays like the PS5 shell */
+  .tv::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(3,6,14,.62) 0%, rgba(3,6,14,.10) 26%, rgba(3,6,14,.08) 55%, rgba(3,6,14,.66) 100%);
+  }
+  .bar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 26px;
+    background: linear-gradient(180deg, rgba(4,8,16,.55), transparent);
+  }
+  .bar .skull {
+    width: 30px; height: 30px; border-radius: 8px;
+    background: linear-gradient(145deg, #141d33, #060b16);
+    border: 1px solid rgba(56,240,255,.45);
+    display: grid; place-items: center; font-size: 16px;
+  }
+  .bar .title { font-weight: 600; letter-spacing: .03em; }
+  .bar .badge {
+    margin-left: auto; font-size: 11px; color: #9fd9ff;
+    border: 1px solid rgba(56,240,255,.35); border-radius: 999px;
+    padding: 3px 10px; background: rgba(5,12,24,.5);
+  }
+  .page {
+    position: absolute; inset: 0; z-index: 2;
+    display: grid; place-items: center;
+  }
+  .sheet {
+    width: 860px; max-width: 78%;
+    background: var(--panel);
+    border: 1px solid rgba(99, 140, 220, .25);
+    border-radius: 16px;
+    padding: 22px 26px 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 18px 50px rgba(0,0,0,.5);
+  }
+  .sheet h2 {
+    font-size: 18px; font-weight: 600; letter-spacing: .03em;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px;
+  }
+  .sheet h2 .dot { color: var(--magenta); }
+  .sheet .sub { color: #93a8cc; font-size: 12px; margin-bottom: 16px; }
+  .row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 12px; border-radius: 10px;
+    font-size: 14px; color: #cfdcf2;
+  }
+  .row + .row { margin-top: 2px; }
+  .row .ic {
+    width: 30px; height: 30px; flex: none; border-radius: 8px;
+    background: linear-gradient(145deg,#0b1526,#050a14);
+    border: 1px solid rgba(84,120,190,.35);
+    display: grid; place-items: center; font-size: 15px;
+  }
+  .row .val { margin-left: auto; color: #7f93b8; font-size: 13px; }
+  .row.focus {
+    background: linear-gradient(90deg, rgba(56,240,255,.16), rgba(214,75,255,.10));
+    border-color: transparent; outline: 1px solid rgba(56,240,255,.5);
+    color: #ffffff;
+  }
+  .toggle {
+    width: 34px; height: 18px; border-radius: 999px; flex: none;
+    background: linear-gradient(90deg,var(--cyan),#5b8cff);
+    position: relative;
+  }
+  .toggle::after {
+    content: ""; position: absolute; top: 2px; right: 2px;
+    width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  }
+  .toggle.off { background: #243352; }
+  .toggle.off::after { right: auto; left: 2px; background: #8fa3c4; }
+  .hint {
+    z-index: 3; position: absolute; bottom: 12px; right: 24px;
+    font-size: 11px; color: #9eb4d8; background: rgba(4,9,18,.55);
+    border: 1px solid rgba(84,120,190,.3); border-radius: 8px; padding: 6px 10px;
+  }
+  .switch {
+    display: inline-flex; gap: 8px; background: #0b1322;
+    border: 1px solid #1c2a48; border-radius: 999px; padding: 5px;
+    font-size: 13px;
+  }
+  .switch button {
+    border: 0; border-radius: 999px; padding: 7px 18px; cursor: pointer;
+    background: transparent; color: #93a8cc; font: inherit;
+  }
+  .switch button.on { background: #182742; color: #fff; }
+  body.flat .tv { background-image: none; background: radial-gradient(120% 120% at 20% 0%, #101a30 0%, #05070d 60%); }
+</style>
+</head>
+<body>
+  <h1><span>★ HYL92</span> — Aperçu du fond gothique dans la Toolbox</h1>
+  <div class="switch">
+    <button id="btn-bg" class="on" onclick="setMode(true)">Avec fond</button>
+    <button id="btn-flat" onclick="setMode(false)">Sans fond (actuel)</button>
+  </div>
+  <div class="tv" id="tv">
+    <div class="bar">
+      <div class="skull">💀</div>
+      <div class="title">★ HYL92 Tools</div>
+      <div class="badge">v1.0.0</div>
+    </div>
+    <div class="page">
+      <div class="sheet">
+        <h2>Debug Settings <span class="dot">→ ★ HYL92 Tools</span></h2>
+        <div class="sub">Page racine de la Toolbox (rendu mockup — le vrai rendu console reste l'UI PS5)</div>
+        <div class="row focus"><div class="ic">🎮</div> PS5 Game Jailbreak <div class="toggle"></div></div>
+        <div class="row"><div class="ic">🧩</div> Payload Manager <div class="val">3 actifs</div></div>
+        <div class="row"><div class="ic">⌨️</div> HYL92 Shortcuts <div class="val">COUCHES → Toolbox</div></div>
+        <div class="row"><div class="ic">🔧</div> Debug Settings (dev)</div>
+        <div class="row"><div class="ic">⚙️</div> Rest Mode Manager <div class="toggle off"></div></div>
+        <div class="row"><div class="ic">💾</div> HDD Backup Tools</div>
+      </div>
+    </div>
+    <div class="hint">Mockup concept — la page console réelle n'accepte pas de fond personnalisé</div>
+  </div>
+  <p class="note">
+    Ton image (1672×941, crâne néon dans des ruines gothiques) posée comme décor, avec un
+    voile sombre comme sur la vrai UI PS5 pour garder les textes lisibles. Le bouton
+    « sans fond » compare avec l'état actuel.
+  </p>
+<script>
+  function setMode(on) {
+    document.body.classList.toggle('flat', !on);
+    document.getElementById('btn-bg').classList.toggle('on', on);
+    document.getElementById('btn-flat').classList.toggle('on', !on);
+  }
+</script>
+</body>
+</html>
