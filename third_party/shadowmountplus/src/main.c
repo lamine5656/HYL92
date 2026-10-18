@@ -690,6 +690,8 @@ int main(void) {
   runtime_mount_state_unlock();
   if (!app_db_run_startup_maintenance())
     log_debug("  [DB] startup snd0info maintenance unavailable");
+  if (!app_db_rebrand_debug_settings_titles())
+    log_debug("  [DB] debug settings title rebrand skipped or unavailable");
   log_debug("[STARTUP] scanner startup sync begin");
   if (!sm_scanner_run_startup_sync()) {
     log_debug("[STARTUP] scanner startup sync aborted");

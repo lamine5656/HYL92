@@ -240,6 +240,49 @@ out:
   return ok;
 }
 
+/*
+ * Shortcut-app shelf names (e.g. the debug-settings tile left by older HEN
+ * installs) live in the mms app.db rows themselves: an updated param.json
+ * only refreshes the shelf when the shell re-registers the title, so stale
+ * names persist on screen. Converge every "Debug Settings" title name
+ * (NPXS40165 today, any leftover later) straight to the HYL92 brand.
+ */
+#define HYL92_DB_TITLE "\xe2\x98\x85 HYL92 Tools"
+bool app_db_rebrand_debug_settings_titles(void) {
+  static const char *const kUpdateQueries[] = {
+      "UPDATE tbl_contentinfo SET titleName='" HYL92_DB_TITLE "' "
+      "WHERE titleName LIKE '%Debug Settings%';",
+      "UPDATE tbl_iconinfo_0395971800 SET titleName='" HYL92_DB_TITLE "' "
+      "WHERE titleName LIKE '%Debug Settings%';",
+      "UPDATE tbl_iconinfo_0395971801 SET titleName='" HYL92_DB_TITLE "' "
+      "WHERE titleName LIKE '%Debug Settings%';",
+      "UPDATE tbl_conceptmetadata SET conceptName='" HYL92_DB_TITLE "' "
+      "WHERE conceptName LIKE '%Debug Settings%';",
+      "UPDATE tbl_concepticoninfo_0395971800 SET conceptName='" HYL92_DB_TITLE
+      "', primaryTitleName='" HYL92_DB_TITLE "' "
+      "WHERE conceptName LIKE '%Debug Settings%' "
+      "OR primaryTitleName LIKE '%Debug Settings%';",
+      "UPDATE tbl_concepticoninfo_0395971801 SET conceptName='" HYL92_DB_TITLE
+      "', primaryTitleName='" HYL92_DB_TITLE "' "
+      "WHERE conceptName LIKE '%Debug Settings%' "
+      "OR primaryTitleName LIKE '%Debug Settings%';",
+  };
+
+  int total_changes = 0;
+  for (size_t i = 0; i < sizeof(kUpdateQueries) / sizeof(kUpdateQueries[0]);
+       ++i) {
+    int changes = 0;
+    if (!app_db_exec_with_retry(kUpdateQueries[i], APP_DB_UPDATE_BUSY_RETRIES,
+                                "debug settings title rebrand", &changes)) {
+      return false;
+    }
+    total_changes += changes;
+  }
+  if (total_changes > 0)
+    log_debug("  [DB] debug settings titles rebranded rows=%d", total_changes);
+  return true;
+}
+
 static int app_db_update_title(const char *title_id, const char *sql,
                                const char *label) {
   int result = -1;

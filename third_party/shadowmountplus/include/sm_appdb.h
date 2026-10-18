@@ -26,6 +26,8 @@ typedef struct {
 void shutdown_app_db(void);
 // Normalize existing snd0info rows during process startup.
 bool app_db_run_startup_maintenance(void);
+// Converge stale "Debug Settings" shelf titles in app.db to the HYL92 brand.
+bool app_db_rebrand_debug_settings_titles(void);
 // Update snd0 metadata for a registered title.
 int update_snd0info(const char *title_id);
 // Normalize an existing snd0Info path for one title.
