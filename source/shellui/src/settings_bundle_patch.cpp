@@ -16,7 +16,6 @@ General Public License for more details. */
 #include <onion/debug_settings_route_policy.hpp>
 #include <onion/platform.h>
 #include <sha1.hpp>
-
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -79,8 +78,8 @@ static constexpr unsigned char kLegacyOldLabel[] = {
     0xe2, 0x98, 0x85, 'D', 'e', 'b', 'u', 'g', ' ', 'S', 'e', 't', 't', 'i',
     'n', 'g', 's'};
 static constexpr unsigned char kLegacyNewLabel[] = {
-    0xe2, 0x98, 0x85, 'H', 'Y', 'L', '9', '2', ' ', 'T', 'o', 'o', 'l',
-    's', ' ', ' ', ' '};
+    0xe2, 0x98, 0x85, ' ', 'H', 'Y', 'L', '9', '2', ' ', 'T', 'o', 'o',
+    'l',  's',  ' ',  ' '};
 static constexpr unsigned char kIconStock[] = {
     'i', 'c', 'o', 'n', '_', 's', 'e', 't', 't', 'i', 'n', 'g'};
 /* "hyl92seticon" is exactly 12 chars like "icon_setting": the in-place swap
@@ -98,14 +97,37 @@ static constexpr unsigned char kHermesOldLabel[] = {
     't',  0x00, 'i', 0x00, 'n', 0x00, 'g', 0x00, 's', 0x00,
 };
 static constexpr unsigned char kHermesNewLabel[] = {
-    0x05, 0x26, 'H', 0x00, 'Y', 0x00, 'L', 0x00, '9', 0x00,
-    '2',  0x00, ' ', 0x00, 'T', 0x00, 'o', 0x00, 'o', 0x00,
-    'l',  0x00, 's', 0x00, ' ', 0x00, ' ', 0x00, ' ', 0x00,
+    0x05, 0x26, ' ', 0x00, 'H', 0x00, 'Y', 0x00, 'L', 0x00, '9', 0x00,
+    '2',  0x00, ' ', 0x00, 'T', 0x00, 'o', 0x00, 'o', 0x00, 'l', 0x00,
+    's',  0x00, ' ', 0x00, ' ', 0x00,
 };
 
 static_assert(sizeof(kLegacyOldLabel) == sizeof(kLegacyNewLabel));
 static_assert(sizeof(kHermesOldLabel) == sizeof(kHermesNewLabel));
 static_assert(sizeof(kIconStock) == sizeof(kIconHybrid));
+
+/* Leftover "Debug Settings" texts (applet page titles, home entries, stray
+ * lists). Star-prefixed patterns are swapped first because the plain pattern
+ * is a byte-substring of them. The plain legacy slot only fits 14 bytes, so
+ * it carries "★ HYL92" padded with spaces; the 17-byte slots fit the full
+ * "★ HYL92 Tools". UTF-16LE slots fit Tools again (Hermes encodes the star
+ * in one code unit). */
+static constexpr unsigned char kLegacyDebugPlainOld[] = {
+    'D', 'e', 'b', 'u', 'g', ' ', 'S', 'e', 't', 't', 'i', 'n', 'g', 's'};
+static constexpr unsigned char kLegacyDebugPlainNew[] = {
+    0xe2, 0x98, 0x85, ' ', 'H', 'Y', 'L', '9', '2', ' ', ' ', ' ', ' ',
+    ' '};
+static constexpr unsigned char kHermesDebugPlainOld[] = {
+    'D', 0x00, 'e', 0x00, 'b', 0x00, 'u', 0x00, 'g', 0x00, ' ', 0x00,
+    'S', 0x00, 'e', 0x00, 't', 0x00, 't', 0x00, 'i', 0x00, 'n', 0x00,
+    'g', 0x00, 's', 0x00};
+static constexpr unsigned char kHermesDebugPlainNew[] = {
+    0x05, 0x26, ' ', 0x00, 'H', 0x00, 'Y', 0x00, 'L', 0x00, '9', 0x00,
+    '2',  0x00, ' ', 0x00, 'T', 0x00, 'o', 0x00, 'o', 0x00, 'l', 0x00,
+    's',  0x00, ' ', 0x00};
+
+static_assert(sizeof(kLegacyDebugPlainOld) == sizeof(kLegacyDebugPlainNew));
+static_assert(sizeof(kHermesDebugPlainOld) == sizeof(kHermesDebugPlainNew));
 
 static bool range_contains(size_t size, size_t offset, size_t length) {
   return offset <= size && length <= size - offset;
@@ -215,17 +237,6 @@ static int apply_equal_length_patch(const BundleView &bundle, size_t offset,
   return 1;
 }
 
-static int replace_first(const BundleView &bundle, const unsigned char *stock,
-                         const unsigned char *replacement, size_t size) {
-  for (size_t offset = 0; offset + size <= bundle.size; ++offset) {
-    if (memcmp(bundle.data + offset, stock, size) == 0) {
-      memcpy(bundle.data + offset, replacement, size);
-      return 1;
-    }
-  }
-  return 0;
-}
-
 /* Swap every stock icon reference for the HYL92 asset id. Equal-length only,
  * so surrounding bundle structures never move. */
 static int replace_all_equal(const BundleView &bundle,
@@ -294,8 +305,12 @@ void patch_settings_bundle(unsigned char *buffer, int size) {
         sizeof(kLegacyOldLabel));
     const int icon_count =
         replace_all_equal(legacy, kIconStock, kIconHybrid, sizeof(kIconStock));
-    LOG_DEBUG("settings_bundle_patch: activated '%s' label=%d icon_refs=%d",
-              profile->name, label_count, icon_count);
+    const int text_count = replace_all_equal(
+        legacy, kLegacyDebugPlainOld, kLegacyDebugPlainNew,
+        sizeof(kLegacyDebugPlainOld));
+    LOG_DEBUG("settings_bundle_patch: activated '%s' label=%d icon_refs=%d "
+              "text=%d",
+              profile->name, label_count, icon_count, text_count);
     return;
   }
 
@@ -307,15 +322,50 @@ void patch_settings_bundle(unsigned char *buffer, int size) {
   }
 
   const int label_count =
-      replace_first(hbc, kHermesOldLabel, kHermesNewLabel,
-                    sizeof(kHermesOldLabel));
+      replace_all_equal(hbc, kHermesOldLabel, kHermesNewLabel,
+                        sizeof(kHermesOldLabel));
+  const int text_count = replace_all_equal(
+      hbc, kHermesDebugPlainOld, kHermesDebugPlainNew,
+      sizeof(kHermesDebugPlainOld));
   const int icon_count =
       replace_all_equal(hbc, kIconStock, kIconHybrid, sizeof(kIconStock));
-  if (label_count != 0 || icon_count != 0) {
+  if (label_count != 0 || text_count != 0 || icon_count != 0) {
     update_hermes_footer_sha1(hbc, file_length);
   }
-  LOG_DEBUG("settings_bundle_patch: Hermes NPXS40008 label=%d icon_refs=%d "
-            "footer=%s",
-            label_count, icon_count,
-            (label_count != 0 || icon_count != 0) ? "updated" : "unchanged");
+  LOG_DEBUG("settings_bundle_patch: Hermes NPXS40008 label=%d text=%d "
+            "icon_refs=%d footer=%s",
+            label_count, text_count, icon_count,
+            (label_count != 0 || text_count != 0 || icon_count != 0)
+                ? "updated"
+                : "unchanged");
+}
+
+void patch_rnps_legacy_payload_globals(unsigned char *buffer, int size) {
+  if (!buffer || size <= 0) {
+    return;
+  }
+
+  /*
+   * etaHEN-style unfiltered pass over every legacy RNPS bundle: hermes-less
+   * payloads carry no footer digest, so equal-length swaps are safe anywhere.
+   * Hermes payloads are left alone here (their footer must be recomputed),
+   * the validated Settings bundle is handled by patch_settings_bundle().
+   */
+  BundleView legacy = {};
+  if (!locate_legacy_payload(buffer, static_cast<size_t>(size), &legacy)) {
+    return;
+  }
+
+  const int star_count =
+      replace_all_equal(legacy, kLegacyOldLabel, kLegacyNewLabel,
+                        sizeof(kLegacyOldLabel));
+  const int plain_count = replace_all_equal(
+      legacy, kLegacyDebugPlainOld, kLegacyDebugPlainNew,
+      sizeof(kLegacyDebugPlainOld));
+  const int icon_count =
+      replace_all_equal(legacy, kIconStock, kIconHybrid, sizeof(kIconStock));
+  if (star_count != 0 || plain_count != 0 || icon_count != 0) {
+    LOG_DEBUG("settings_bundle_patch: legacy globals star=%d text=%d icon=%d",
+              star_count, plain_count, icon_count);
+  }
 }

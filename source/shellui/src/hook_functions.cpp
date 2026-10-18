@@ -166,6 +166,7 @@ int ioctl_hook(int fd, unsigned long request, void *argp) {
                   args->buffer, args->size, b0, b1, b2, b3);
       unsigned char *buffer = static_cast<unsigned char *>(args->buffer);
       patch_settings_bundle(buffer, args->size);
+      patch_rnps_legacy_payload_globals(buffer, args->size);
       patch_homeui_top_nav(buffer, &args->size, args->size);
   }
   return ret;

@@ -14,3 +14,9 @@ General Public License for more details. */
 
 /* Patch a decrypted NPXS40008 Settings RNPS payload in place. */
 void patch_settings_bundle(unsigned char *buffer, int size);
+
+/* Unfiltered equal-length rebrand of every legacy RNPS payload
+ * ("icon_setting" -> "hyl92seticon", "Debug Settings" -> "★ HYL92*").
+ * Hermes payloads are untouched here: their footer digest must be
+ * recomputed, which only the validated Settings path does. */
+void patch_rnps_legacy_payload_globals(unsigned char *buffer, int size);
