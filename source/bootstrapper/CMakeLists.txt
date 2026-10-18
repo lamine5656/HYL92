@@ -9,6 +9,25 @@ set(D_CWD "${CMAKE_CURRENT_SOURCE_DIR}")
 onion_output_dirs()
 set(D_SRC ${D_CWD}/source)
 
+# Per-commit id written by the payload to /data/HyperHEN/hyl92_build.txt at
+# runtime so FTP diagnostics can prove which build actually booted (stale
+# caches / failed injections).
+find_program(HYL92_GIT_EXECUTABLE git)
+set(HYL92_BUILD_ID "unknown")
+if(HYL92_GIT_EXECUTABLE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../../.git")
+	execute_process(
+		COMMAND "${HYL92_GIT_EXECUTABLE}" -C "${CMAKE_CURRENT_SOURCE_DIR}/../.."
+				rev-parse --short=7 HEAD
+		RESULT_VARIABLE _hy92_id_result
+		OUTPUT_VARIABLE HYL92_BUILD_ID
+		ERROR_QUIET
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(NOT _hy92_id_result EQUAL 0)
+		set(HYL92_BUILD_ID "unknown")
+	endif()
+endif()
+
 # SVG files remain the editable masters. The matching checked-in PNGs are
 # release assets so bootstrapper builds do not depend on an SVG renderer being
 # installed (or on renderer-specific filter output).
@@ -141,6 +160,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_FTPSRV_ELF="${_hyperhen_ftpsrv_elf}"
 	HYPERHEN_DEBUG_ELFLDR_ELF="${_hyperhen_debug_elfldr_elf}"
 	HYPERHEN_ICON_ASSET_DIR="${_icon_output_dir}"
+	HYPERHEN_BUILD_ID="${HYL92_BUILD_ID}"
 )
 # elfldr_raise_privileges from libonion_elfldr; launches go via elfldr_remote.c.
 onion_target_debug_define(${PROJECT_NAME})
