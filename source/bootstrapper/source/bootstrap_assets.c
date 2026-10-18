@@ -2,14 +2,17 @@
 
 #include "bootstrap_assets.h"
 
+#include <onion/log.h>
 #include <onion/fs.h>
 #include <onion/notify.h>
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 
 extern uint8_t sicon_start[];
 extern const unsigned int sicon_size;
@@ -67,6 +70,40 @@ static const char *const kShellBackgrounds[] = {
     "/system_ex/vsh_asset/bg_NPXS40154.dds",
 };
 
+/*
+ * FreeBSD-style file flags (this kernel is a FreeBSD fork): the stock shell
+ * assets under /system_ex are marked immutable, so unlink()/rename() over
+ * them fail with EPERM and the replacement silently never lands — while
+ * files we created ourselves (no flag) rewrite fine. Clear the flags on the
+ * target before replacing it (SYS_chflags = 34).
+ */
+static void clear_shell_file_flags(const char *path) {
+  if (syscall(SYS_chflags, path, 0UL) != 0)
+    LOG_ERROR("assets: chflags %s failed (%s)", path, strerror(errno));
+}
+
+/* Replace a stock shell file with embedded artwork. If the atomic
+ * temp+rename still fails after clearing flags (some mount flavors refuse
+ * rename-over), rewrite the existing file in place as a fallback. */
+static void replace_shell_file(const char *path, const void *data,
+                               size_t size) {
+  clear_shell_file_flags(path);
+  if (write_file_atomic(path, data, size))
+    return;
+  LOG_ERROR("assets: atomic replace failed, rewriting %s in place", path);
+  FILE *f = fopen(path, "r+b");
+  if (!f) {
+    LOG_ERROR("assets: in-place rewrite of %s failed (%s)", path,
+              strerror(errno));
+    return;
+  }
+  const size_t written = fwrite(data, 1, size, f);
+  fflush(f);
+  fclose(f);
+  if (written != size)
+    LOG_ERROR("assets: %s short write (%zu/%zu)", path, written, size);
+}
+
 static void converge_shell_backgrounds(void) {
   const size_t kExpectedSize = 148 + (size_t)1920 * 1080 * 4;
   if ((size_t)hyl92_bg_size != kExpectedSize) {
@@ -89,7 +126,7 @@ static void converge_shell_backgrounds(void) {
       continue;
     }
     free(current);
-    (void)write_file_atomic(path, hyl92_bg_start, (size_t)hyl92_bg_size);
+    replace_shell_file(path, hyl92_bg_start, (size_t)hyl92_bg_size);
   }
 }
 
@@ -160,7 +197,7 @@ bool bootstrap_assets_write(void) {
        ++i) {
     struct stat st;
     if (stat(kRebrandIfPresent[i], &st) == 0 && S_ISREG(st.st_mode)) {
-      (void)write_file_atomic(kRebrandIfPresent[i], sicon_start, sicon_size);
+      replace_shell_file(kRebrandIfPresent[i], sicon_start, sicon_size);
     }
   }
   return startup_icon_ready;
