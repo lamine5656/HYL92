@@ -13,6 +13,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 extern uint8_t sicon_start[];
 extern const unsigned int sicon_size;
