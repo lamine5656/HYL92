@@ -24,7 +24,7 @@ KERNEL_SYS_STUB_SO := src/libkernel_sys_ext.so
 KERNEL_SYS_STUB_SRCS := $(PS5_SCE_STUBS_DIR)/libkernel_sys.c src/libkernel_sys_ext.c
 
 ASSET_SRCS := src/notify_icon_asset.c src/config_ini_example_asset.c src/web_index_asset.c
-ASSET_SRCS += src/shell_icon_param_asset.c
+ASSET_SRCS += src/shell_icon_param_asset.c src/shell_icon_param_npxs40165_asset.c
 SRCS := src/main.c $(wildcard src/sm_*.c) $(ASSET_SRCS)
 ASM_SRCS := src/sm_shellcore_bridge.S
 OBJS := $(SRCS:.c=.o) $(ASM_SRCS:.S=.o)
@@ -57,6 +57,9 @@ src/web_index_asset.c: web/index.html
 	xxd -i $< > $@
 
 src/shell_icon_param_asset.c: assets/shell_icon_param.json
+	xxd -i $< > $@
+
+src/shell_icon_param_npxs40165_asset.c: assets/shell_icon_param_npxs40165.json
 	xxd -i $< > $@
 
 src/main.o src/sm_image_index.o: CFLAGS += -DSHADOWMOUNT_BUILD_TIME=\"$(BUILD_TIME)\"

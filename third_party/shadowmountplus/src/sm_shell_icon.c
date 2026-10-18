@@ -15,6 +15,8 @@ extern unsigned char smp_icon_png[];
 extern unsigned int smp_icon_png_len;
 extern unsigned char assets_shell_icon_param_json[];
 extern unsigned int assets_shell_icon_param_json_len;
+extern unsigned char assets_shell_icon_param_npxs40165_json[];
+extern unsigned int assets_shell_icon_param_npxs40165_json_len;
 
 static bool install_asset(const char *path, const unsigned char *data,
                           size_t size) {
@@ -337,12 +339,18 @@ static void converge_appmeta_tiles(const char *title_id) {
     log_debug("  [SHELLICON] %s icon0.png -> \"" SM_HYL92_TITLE "\"", title_id);
   }
 
-  /* Legacy FAKE10101 tiles stage the whole param copy from our asset; the
-   * real shortcut big app keeps its own JSON and gets an in-place rebrand. */
+  /* Legacy FAKE10101 tiles stage the whole param copy from our asset; for
+   * NPXS40165 stage the repaired full copy too: repeated in-place rewrites
+   * of the original JSON produced invalid quotes inside titleName, and an
+   * invalid param.json makes the shell skip the name refresh (the card's
+   * own name stays stale on screen). Staging heals it every boot. */
+  snprintf(path, sizeof(path), "%s/param.json", dir);
   if (strcmp(title_id, SM_SHELL_ICON_TITLE_ID) == 0) {
-    snprintf(path, sizeof(path), "%s/param.json", dir);
     install_asset(path, assets_shell_icon_param_json,
                   (size_t)assets_shell_icon_param_json_len);
+  } else if (strcmp(title_id, SM_SHELL_ICON_SHORTCUT_TITLE_ID) == 0) {
+    install_asset(path, assets_shell_icon_param_npxs40165_json,
+                  (size_t)assets_shell_icon_param_npxs40165_json_len);
   } else {
     (void)rebrand_appmeta_param(title_id);
   }

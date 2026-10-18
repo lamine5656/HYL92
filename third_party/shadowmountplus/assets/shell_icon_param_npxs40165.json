@@ -1,0 +1,42 @@
+{
+  "addcont": {
+    "serviceIdForSharing": [
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   ",
+      "                   "
+    ]
+  },
+  "ageLevel": {
+    "DE": 0,
+    "GB": 0,
+    "US": 0,
+    "default": 0
+  },
+  "applicationCategoryType": 0,
+  "applicationDrmType": "free",
+  "attribute": 0,
+  "attribute2": 0,
+  "attribute3": 0,
+  "conceptId": "40165",
+  "contentBadgeType": 2,
+  "contentId": "IV9999-NPXS40165_00-XXXXXXXXXXXXXXXX",
+  "contentVersion": "01.001.000",
+  "deeplinkUri": "pssettings:play?function=debug_settings",
+  "localizedParameters": {
+    "defaultLanguage": "en-US",
+    "en-US": { "titleName": "\u2605 HYL92 Tools" }
+  },
+  "masterVersion": "01.00",
+  "pubtools": {
+    "creationDate": "2023-08-25 00:00:00",
+    "toolVersion": "1.21"
+  },
+  "requiredSystemSoftwareVersion": "0x0000000000000000",
+  "sdkVersion": "0x0000000000000000",
+  "titleId": "NPXS40165",
+  "versionFileUri": ""
+}

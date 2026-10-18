@@ -86,7 +86,7 @@ file(GLOB_RECURSE HYPERHEN_AUTOMOUNT_INPUTS CONFIGURE_DEPENDS
 	"${HYPERHEN_AUTOMOUNT_SOURCE_DIR}/src/*"
 	"${HYPERHEN_AUTOMOUNT_SOURCE_DIR}/web/*")
 list(FILTER HYPERHEN_AUTOMOUNT_INPUTS EXCLUDE REGEX
-	"/src/(notify_icon_asset|config_ini_example_asset|web_index_asset|shell_icon_param_asset)\\.c$")
+	"/src/(notify_icon_asset|config_ini_example_asset|web_index_asset|shell_icon_param_asset|shell_icon_param_npxs40165_asset)\\.c$")
 add_custom_command(
 	OUTPUT "${HYPERHEN_AUTOMOUNT_ELF}"
 	COMMAND "${HYPERHEN_ROOT}/scripts/build_automount.sh"
