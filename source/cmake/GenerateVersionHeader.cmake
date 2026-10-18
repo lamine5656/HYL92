@@ -29,6 +29,19 @@ if(GIT_EXECUTABLE)
   endif()
 endif()
 
+# Per-commit fingerprint written by the payload to /data/HyperHEN/
+# hyl92_build.txt so FTP diagnostics can prove which build actually booted.
+execute_process(
+  COMMAND "${GIT_EXECUTABLE}" -C "${REPO_ROOT}" rev-parse --short=7 HEAD
+  RESULT_VARIABLE _id_result
+  OUTPUT_VARIABLE _git_id
+  ERROR_QUIET
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(_id_result NOT EQUAL 0 OR _git_id STREQUAL "")
+  set(_git_id "unknown")
+endif()
+
 set(_snapshot_version "")
 if(EXISTS "${REPO_ROOT}/VERSION")
   file(STRINGS "${REPO_ROOT}/VERSION" _snapshot_version LIMIT_COUNT 1)
@@ -63,6 +76,7 @@ string(CONCAT _contents
     "#pragma once\n\n"
     "/* Generated at build time. Do not edit. */\n"
     "#define HYPERHEN_VERSION \"${_version}\"\n"
+    "#define HYPERHEN_BUILD_ID \"${_git_id}\"\n"
     "#define HYPERHEN_AUTHOR \"MICHELE MEDIA\"\n")
 
 get_filename_component(_output_dir "${OUTPUT_FILE}" DIRECTORY)

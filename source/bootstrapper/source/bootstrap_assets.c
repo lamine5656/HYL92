@@ -5,6 +5,11 @@
 #include <onion/log.h>
 #include <onion/fs.h>
 #include <onion/notify.h>
+#include <onion/version.h>
+
+#ifndef HYPERHEN_BUILD_ID
+#define HYPERHEN_BUILD_ID "unknown"
+#endif
 
 #include <errno.h>
 #include <stdint.h>
@@ -137,6 +142,22 @@ bool bootstrap_assets_write(void) {
   mkdir("/data/HyperHEN/tools", 0777);
   mkdir("/user/data", 0777);
   mkdir("/user/data/HyperHEN", 0777);
+
+  /*
+   * Boot fingerprint: FTP-visible proof of which build actually ran on the
+   * console (per-commit id baked into the generated version header at build
+   * time). Read /data/HyperHEN/hyl92_build.txt (or the vsh_asset mirror)
+   * with the FTP tool to diagnose stale caches / failed injections.
+   */
+  char fingerprint[128];
+  const int fp = snprintf(fingerprint, sizeof(fingerprint), "version=%s\nbuild=%s\n",
+                          HYPERHEN_VERSION, HYPERHEN_BUILD_ID);
+  if (fp > 0 && (size_t)fp < sizeof(fingerprint)) {
+    (void)write_file_atomic("/data/HyperHEN/hyl92_build.txt", fingerprint,
+                            (size_t)fp);
+    (void)write_file_atomic("/system_ex/vsh_asset/hyl92_build.txt", fingerprint,
+                            (size_t)fp);
+  }
   const bool startup_icon_ready = write_file_atomic(
       ONION_NOTIFY_ICON_PATH, sicon_start, sicon_size);
 
