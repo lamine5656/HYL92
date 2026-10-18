@@ -81,8 +81,15 @@ static constexpr unsigned char kLegacyOldLabel[] = {
 static constexpr unsigned char kLegacyNewLabel[] = {
     0xe2, 0x98, 0x85, 'H', 'Y', 'L', '9', '2', ' ', 'T', 'o', 'o', 'l',
     's', ' ', ' ', ' '};
-static constexpr unsigned char kLegacyOldIcon[] = {
+static constexpr unsigned char kIconStock[] = {
     'i', 'c', 'o', 'n', '_', 's', 'e', 't', 't', 'i', 'n', 'g'};
+/* "hyl92seticon" is exactly 12 chars like "icon_setting": the in-place swap
+ * keeps every Hermes string-table offset and legacy layout valid. The
+ * bootstrapper plants hyl92seticon.png next to the stock textures in the
+ * NPXS40008 RNPS tree, so the shell loads the HYL92 skull (etaHEN's proven
+ * mechanism). */
+static constexpr unsigned char kIconHybrid[] = {
+    'h', 'y', 'l', '9', '2', 's', 'e', 't', 'i', 'c', 'o', 'n'};
 
 /* Both Hermes labels contain 15 UTF-16LE code units. */
 static constexpr unsigned char kHermesOldLabel[] = {
@@ -98,6 +105,7 @@ static constexpr unsigned char kHermesNewLabel[] = {
 
 static_assert(sizeof(kLegacyOldLabel) == sizeof(kLegacyNewLabel));
 static_assert(sizeof(kHermesOldLabel) == sizeof(kHermesNewLabel));
+static_assert(sizeof(kIconStock) == sizeof(kIconHybrid));
 
 static bool range_contains(size_t size, size_t offset, size_t length) {
   return offset <= size && length <= size - offset;
@@ -188,8 +196,8 @@ find_legacy_profile(const BundleView &payload) {
                   sizeof(kLegacyOldLabel)) ||
          bytes_at(payload, profile.label_offset, kLegacyNewLabel,
                   sizeof(kLegacyNewLabel))) &&
-        bytes_at(payload, profile.icon_offset, kLegacyOldIcon,
-                 sizeof(kLegacyOldIcon))) {
+        bytes_at(payload, profile.icon_offset, kIconStock,
+                 sizeof(kIconStock))) {
       return &profile;
     }
   }
@@ -216,6 +224,22 @@ static int replace_first(const BundleView &bundle, const unsigned char *stock,
     }
   }
   return 0;
+}
+
+/* Swap every stock icon reference for the HYL92 asset id. Equal-length only,
+ * so surrounding bundle structures never move. */
+static int replace_all_equal(const BundleView &bundle,
+                             const unsigned char *stock,
+                             const unsigned char *replacement, size_t size) {
+  int count = 0;
+  for (size_t offset = 0; offset + size <= bundle.size; ++offset) {
+    if (memcmp(bundle.data + offset, stock, size) == 0) {
+      memcpy(bundle.data + offset, replacement, size);
+      ++count;
+      offset += size - 1;
+    }
+  }
+  return count;
 }
 
 static bool validate_hermes_settings(const BundleView &hbc,
@@ -268,9 +292,10 @@ void patch_settings_bundle(unsigned char *buffer, int size) {
     const int label_count = apply_equal_length_patch(
         legacy, profile->label_offset, kLegacyOldLabel, kLegacyNewLabel,
         sizeof(kLegacyOldLabel));
-    LOG_DEBUG("settings_bundle_patch: activated '%s' label=%d "
-              "(stock icon id preserved; URI is intercepted at runtime)",
-              profile->name, label_count);
+    const int icon_count =
+        replace_all_equal(legacy, kIconStock, kIconHybrid, sizeof(kIconStock));
+    LOG_DEBUG("settings_bundle_patch: activated '%s' label=%d icon_refs=%d",
+              profile->name, label_count, icon_count);
     return;
   }
 
@@ -284,10 +309,13 @@ void patch_settings_bundle(unsigned char *buffer, int size) {
   const int label_count =
       replace_first(hbc, kHermesOldLabel, kHermesNewLabel,
                     sizeof(kHermesOldLabel));
-  if (label_count != 0) {
+  const int icon_count =
+      replace_all_equal(hbc, kIconStock, kIconHybrid, sizeof(kIconStock));
+  if (label_count != 0 || icon_count != 0) {
     update_hermes_footer_sha1(hbc, file_length);
   }
-  LOG_DEBUG("settings_bundle_patch: Hermes NPXS40008 label=%d footer=%s "
-            "(stock icon id preserved)",
-            label_count, label_count != 0 ? "updated" : "unchanged");
+  LOG_DEBUG("settings_bundle_patch: Hermes NPXS40008 label=%d icon_refs=%d "
+            "footer=%s",
+            label_count, icon_count,
+            (label_count != 0 || icon_count != 0) ? "updated" : "unchanged");
 }

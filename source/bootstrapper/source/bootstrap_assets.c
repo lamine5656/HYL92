@@ -68,6 +68,30 @@ bool bootstrap_assets_write(void) {
                           sicon_size);
 
   /*
+   * etaHEN-style Settings icon swap: the NPXS40008 bundle is rebranded in
+   * memory at decrypt time ("icon_setting" -> "hyl92seticon", done by
+   * shellui/settings_bundle_patch.cpp), so the shell looks up a texture that
+   * only exists once we plant it beside the stock ones. Both mirrors are
+   * covered; a missing tree is skipped rather than created.
+   */
+  static const char *const kRnpsTextureDirs[] = {
+      "/system_ex/rnps/apps/NPXS40008/assets/src/modules/categoriesList/"
+      "assets/texture",
+      "/mnt/rnps/apps/NPXS40008/assets/src/modules/categoriesList/assets/"
+      "texture",
+  };
+  for (size_t i = 0; i < sizeof(kRnpsTextureDirs) / sizeof(kRnpsTextureDirs[0]);
+       ++i) {
+    struct stat st;
+    if (stat(kRnpsTextureDirs[i], &st) != 0 || !S_ISDIR(st.st_mode)) {
+      continue;
+    }
+    char path[256];
+    snprintf(path, sizeof(path), "%s/hyl92seticon.png", kRnpsTextureDirs[i]);
+    (void)write_file_atomic(path, sicon_start, sicon_size);
+  }
+
+  /*
    * Prefer the HYL92 skull on any stock system asset that already exists;
    * never create them, or a stock file becomes HYL92-branded out of nowhere.
    */

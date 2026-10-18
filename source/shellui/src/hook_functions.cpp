@@ -185,11 +185,11 @@ MonoString * CxmlUri_Hook(MonoObject * Instance, MonoString * uri) {
   LOG_DEBUG("uri_string: %s", uri_string.c_str());
   ///LOG_DEBUG("CxmlUri_Hook: %s", uri_string.c_str());
   /*
-   * NPXS40008 registers its Debug Settings icon as icon_setting.png.  Do not
-   * rewrite that asset on disk (or mutate the RNPS string table): the stock
-   * file must remain visible whenever HyperHEN is not loaded.  CxmlUri is the
-   * SettingsPlugin asset resolver, so redirect only this request while our
-   * hooks are ready.
+   * Safety net only: the NPXS40008 bundle is rebranded in memory
+   * (settings_bundle_patch.cpp, "icon_setting" -> "hyl92seticon"), and the
+   * bootstrapper plants hyl92seticon.png in the stock texture directory, so
+   * the stock wrench is normally never requested. If some other module still
+   * asks for icon_setting while our hooks are ready, redirect it to the skull.
    */
   if (uri_string.find("icon_setting") != std::string::npos) {
     LOG_DEBUG("CxmlUri_Hook: intercepted Settings icon -> "
