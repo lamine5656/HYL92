@@ -128,6 +128,154 @@ static bool patch_title_names(char *json, size_t capacity, size_t *len) {
   return changed;
 }
 
+/* Variant of patch_title_names that only rewrites titleName values which
+ * contain @needle. The settings entry keeps shelf-name variants like
+ * "Debug Settings" / "★Debug Settings" on legacy installs; converge any such
+ * appmeta copy to the HYL92 title without touching real game titles. */
+static bool patch_title_names_containing(char *json, size_t capacity,
+                                         size_t *len, const char *needle) {
+  const char key[] = "\"titleName\"";
+  const size_t key_len = sizeof(key) - 1;
+  const char value[] = "\"" SM_HYL92_TITLE "\"";
+  const size_t value_len = sizeof(value) - 1;
+  const size_t needle_len = strlen(needle);
+  bool changed = false;
+  size_t offset = 0;
+
+  while (offset < *len) {
+    const char *hit =
+        (const char *)memchr(json + offset, key[0], *len - offset);
+    if (!hit)
+      return changed;
+    size_t pos = (size_t)(hit - json);
+    if (pos + key_len > *len || memcmp(json + pos, key, key_len) != 0) {
+      offset = pos + 1;
+      continue;
+    }
+
+    size_t scan = pos + key_len;
+    while (scan < *len &&
+           (json[scan] == ' ' || json[scan] == '\t' || json[scan] == '\r' ||
+            json[scan] == '\n' || json[scan] == ':')) {
+      ++scan;
+    }
+    if (scan >= *len || json[scan] != '"') {
+      offset = pos + key_len;
+      continue;
+    }
+    ++scan; /* opening quote of the old value */
+    size_t end = scan;
+    while (end < *len && json[end] != '"') {
+      if (json[end] == '\\' && end + 1 < *len) {
+        ++end;
+      }
+      ++end;
+    }
+    if (end >= *len) {
+      offset = pos + key_len;
+      continue;
+    }
+
+    /* Only rewrite when the current title mentions the settings entry. */
+    bool matches = false;
+    if (end >= scan + needle_len) {
+      for (size_t base = scan; base + needle_len <= end; ++base) {
+        if (memcmp(json + base, needle, needle_len) == 0) {
+          matches = true;
+          break;
+        }
+      }
+    }
+    if (!matches) {
+      offset = end + 1;
+      continue;
+    }
+
+    size_t head_len = scan; /* bytes before the old value, quote included */
+    size_t tail_len = *len - (end + 1);
+    if (head_len + value_len + tail_len + 1 > capacity) {
+      offset = pos + key_len;
+      continue;
+    }
+    memmove(json + head_len + value_len, json + end + 1, tail_len);
+    memcpy(json + head_len, value, value_len);
+    *len = head_len + value_len + tail_len;
+    json[*len] = '\0';
+    changed = true;
+    offset = head_len + value_len;
+  }
+
+  return changed;
+}
+
+/*
+ * Any appmeta whose shelf title still mentions "Debug Settings" (leftover
+ * debug-settings shortcut apps from older HEN installs) keeps surfacing the
+ * old name next to the HYL92 tile. Converge every such existing copy —
+ * title and, when present, its icon — to the HYL92 branding. Directories
+ * without such a title (real games, the store, ...) are left untouched and
+ * nothing new is ever created.
+ */
+static void converge_debug_settings_titles(void) {
+  DIR *dir = opendir(APPMETA_BASE);
+  if (!dir) {
+    return;
+  }
+
+  char path[MAX_PATH];
+  struct dirent *entry;
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_name[0] == '.') {
+      continue;
+    }
+    struct stat st;
+    snprintf(path, sizeof(path), APPMETA_BASE "/%s", entry->d_name);
+    if (stat(path, &st) != 0 || !S_ISDIR(st.st_mode)) {
+      continue;
+    }
+
+    snprintf(path, sizeof(path), APPMETA_BASE "/%s/param.json",
+             entry->d_name);
+    FILE *fp = fopen(path, "rb");
+    if (!fp) {
+      continue;
+    }
+    struct stat file_st;
+    if (fstat(fileno(fp), &file_st) != 0 || file_st.st_size <= 0 ||
+        file_st.st_size > 64 * 1024) {
+      fclose(fp);
+      continue;
+    }
+    size_t capacity = (size_t)file_st.st_size + 16;
+    char *json = (char *)malloc(capacity);
+    if (!json) {
+      fclose(fp);
+      continue;
+    }
+    size_t len = fread(json, 1, (size_t)file_st.st_size, fp);
+    fclose(fp);
+    if (len == 0) {
+      free(json);
+      continue;
+    }
+    json[len] = '\0';
+
+    if (patch_title_names_containing(json, capacity, &len, "Debug Settings")) {
+      if (install_asset(path, (const unsigned char *)json, len)) {
+        log_debug("  [SHELLICON] %s param.json -> \"" SM_HYL92_TITLE "\"",
+                  entry->d_name);
+        snprintf(path, sizeof(path), APPMETA_BASE "/%s/icon0.png",
+                 entry->d_name);
+        if (path_exists(path)) {
+          (void)install_asset(path, smp_icon_png, (size_t)smp_icon_png_len);
+        }
+      }
+    }
+    free(json);
+  }
+  closedir(dir);
+}
+
 static bool rebrand_appmeta_param(const char *title_id) {
   char path[MAX_PATH];
   snprintf(path, sizeof(path), APPMETA_BASE "/%s/param.json", title_id);
@@ -208,4 +356,9 @@ void sm_shell_icon_install_if_missing(void) {
       dir_exists(APPMETA_BASE "/" SM_SHELL_ICON_TITLE_ID)) {
     converge_appmeta_tiles(SM_SHELL_ICON_TITLE_ID);
   }
+
+  /* Settings-name leftovers ("★Debug Settings" shelf cards from older HEN
+   * installs): converge every appmeta whose title still mentions
+   * "Debug Settings" to the HYL92 name. */
+  converge_debug_settings_titles();
 }
