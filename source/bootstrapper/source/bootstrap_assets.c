@@ -88,26 +88,115 @@ static void clear_shell_file_flags(const char *path) {
     LOG_ERROR("assets: chflags %s failed (%s)", path, strerror(errno));
 }
 
-/* Replace a stock shell file with embedded artwork. If the atomic
- * temp+rename still fails after clearing flags (some mount flavors refuse
- * rename-over), rewrite the existing file in place as a fallback. */
-static void replace_shell_file(const char *path, const void *data,
-                               size_t size) {
+/* Whole-file compare so bootstraps skip redundant rewrites when the target
+ * is already at the embedded content (size gate first, then streamed read).
+ * The chunk buffer is static: the bootstrapper converges single-threaded. */
+enum { kCompareChunkSize = 16384 };
+
+static bool file_content_equals(const char *path, const void *data,
+                                size_t size) {
+  FILE *f = fopen(path, "rb");
+  if (!f)
+    return false;
+  struct stat st;
+  bool equal = false;
+  if (fstat(fileno(f), &st) == 0 && st.st_size == (long long)size) {
+    static uint8_t chunk[kCompareChunkSize];
+    const uint8_t *cursor = (const uint8_t *)data;
+    size_t done = 0;
+    equal = true;
+    while (done < size) {
+      const size_t want = size - done > sizeof(chunk) ? sizeof(chunk)
+                                                      : size - done;
+      if (fread(chunk, 1, want, f) != want ||
+          memcmp(chunk, cursor + done, want) != 0) {
+        equal = false;
+        break;
+      }
+      done += want;
+    }
+  }
+  fclose(f);
+  return equal;
+}
+
+/*
+ * Sampled convergence check for the 8 MB background targets: 64 KB from the
+ * head, middle and tail. The embedded artwork differs from stock in every
+ * pixel block, so three matching samples prove the artwork is already on
+ * disk — the full 8 MB compare and any write pipeline can be skipped on
+ * every boot after the first convergence.
+ */
+enum { kBGSampleSize = 65536 };
+
+static bool bg_samples_identical(const char *path, const uint8_t *embedded,
+                                 size_t size) {
+  FILE *f = fopen(path, "rb");
+  if (!f)
+    return false;
+  static uint8_t sample[kBGSampleSize];
+  const size_t sample_offsets[] = {
+      0,
+      (size - kBGSampleSize) / 2,
+      size - kBGSampleSize,
+  };
+  bool all_match = true;
+  for (size_t i = 0;
+       all_match && i < sizeof(sample_offsets) / sizeof(sample_offsets[0]);
+       ++i) {
+    const size_t offset = sample_offsets[i];
+    if (fseek(f, (long)offset, SEEK_SET) != 0 ||
+        fread(sample, 1, kBGSampleSize, f) != kBGSampleSize ||
+        memcmp(sample, embedded + offset, kBGSampleSize) != 0) {
+      all_match = false;
+    }
+  }
+  fclose(f);
+  return all_match;
+}
+
+/*
+ * Converge a shell file to embedded artwork: skip when the target already
+ * holds the exact content, else clear immutable flags and replace through
+ * the atomic temp+rename path. If the atomic write still fails (some mount
+ * flavors refuse rename-over), rewrite the file in place as a fallback.
+ * @known_different skips the full compare when a cheaper sampled check has
+ * already detected a mismatch (backgrounds).
+ */
+static bool converge_file(const char *path, const void *data, size_t size,
+                          bool known_different) {
+  struct stat st;
+  if (!known_different && stat(path, &st) == 0 && S_ISREG(st.st_mode) &&
+      st.st_size == (long long)size &&
+      file_content_equals(path, data, size)) {
+    return true;
+  }
+
   clear_shell_file_flags(path);
   if (write_file_atomic(path, data, size))
-    return;
+    return true;
+
   LOG_ERROR("assets: atomic replace failed, rewriting %s in place", path);
   FILE *f = fopen(path, "r+b");
   if (!f) {
     LOG_ERROR("assets: in-place rewrite of %s failed (%s)", path,
               strerror(errno));
-    return;
+    return false;
   }
   const size_t written = fwrite(data, 1, size, f);
-  fflush(f);
-  fclose(f);
-  if (written != size)
+  (void)fflush(f);
+  (void)fsync(fileno(f));
+  (void)fclose(f);
+  if (written != size) {
     LOG_ERROR("assets: %s short write (%zu/%zu)", path, written, size);
+    return false;
+  }
+  return true;
+}
+
+static bool write_file_if_different(const char *path, const void *data,
+                                    size_t size) {
+  return converge_file(path, data, size, false);
 }
 
 static void converge_shell_backgrounds(void) {
@@ -123,16 +212,10 @@ static void converge_shell_backgrounds(void) {
         st.st_size != (long long)hyl92_bg_size) {
       continue;
     }
-    uint8_t *current = NULL;
-    size_t current_size = 0;
-    if (read_file_alloc(path, (size_t)hyl92_bg_size, &current, &current_size) &&
-        current_size == (size_t)hyl92_bg_size &&
-        memcmp(current, hyl92_bg_start, (size_t)hyl92_bg_size) == 0) {
-      free(current);
+    if (bg_samples_identical(path, hyl92_bg_start, (size_t)hyl92_bg_size)) {
       continue;
     }
-    free(current);
-    replace_shell_file(path, hyl92_bg_start, (size_t)hyl92_bg_size);
+    (void)converge_file(path, hyl92_bg_start, (size_t)hyl92_bg_size, true);
   }
 }
 
@@ -153,12 +236,12 @@ bool bootstrap_assets_write(void) {
   const int fp = snprintf(fingerprint, sizeof(fingerprint), "version=%s\nbuild=%s\n",
                           HYPERHEN_VERSION, HYPERHEN_BUILD_ID);
   if (fp > 0 && (size_t)fp < sizeof(fingerprint)) {
-    (void)write_file_atomic("/data/HyperHEN/hyl92_build.txt", fingerprint,
-                            (size_t)fp);
-    (void)write_file_atomic("/system_ex/vsh_asset/hyl92_build.txt", fingerprint,
-                            (size_t)fp);
+    (void)write_file_if_different("/data/HyperHEN/hyl92_build.txt", fingerprint,
+                                  (size_t)fp);
+    (void)write_file_if_different(
+        "/system_ex/vsh_asset/hyl92_build.txt", fingerprint, (size_t)fp);
   }
-  const bool startup_icon_ready = write_file_atomic(
+  const bool startup_icon_ready = write_file_if_different(
       ONION_NOTIFY_ICON_PATH, sicon_start, sicon_size);
 
   for (size_t i = 0; i < sizeof(kEmbeddedIcons) / sizeof(kEmbeddedIcons[0]);
@@ -166,21 +249,21 @@ bool bootstrap_assets_write(void) {
     char path[256];
     snprintf(path, sizeof(path), "/data/HyperHEN/assets/%s.png",
              kEmbeddedIcons[i].name);
-    (void)write_file_atomic(path, kEmbeddedIcons[i].data,
-                            *kEmbeddedIcons[i].size);
+    (void)write_file_if_different(path, kEmbeddedIcons[i].data,
+                                  *kEmbeddedIcons[i].size);
   }
 
   /* Fixed paths make the toolbox toggles independent of USB storage. */
-  (void)write_file_atomic("/data/HyperHEN/tools/klogsrv.elf",
-                          klogsrv_start, klogsrv_size);
-  (void)write_file_atomic("/data/HyperHEN/tools/ftpsrv.elf",
-                          ftpsrv_start, ftpsrv_size);
-  (void)write_file_atomic("/data/HyperHEN/tools/hyperhen_debug_elfldr.elf",
-                          debug_elfldr_start, debug_elfldr_size);
+  (void)write_file_if_different("/data/HyperHEN/tools/klogsrv.elf",
+                                klogsrv_start, klogsrv_size);
+  (void)write_file_if_different("/data/HyperHEN/tools/ftpsrv.elf",
+                                ftpsrv_start, ftpsrv_size);
+  (void)write_file_if_different("/data/HyperHEN/tools/hyperhen_debug_elfldr.elf",
+                                debug_elfldr_start, debug_elfldr_size);
 
   mkdir("/system_ex/vsh_asset", 0777);
-  (void)write_file_atomic("/system_ex/vsh_asset/hyperhen.png", sicon_start,
-                          sicon_size);
+  (void)write_file_if_different("/system_ex/vsh_asset/hyperhen.png",
+                                sicon_start, sicon_size);
 
   /*
    * etaHEN-style Settings icon swap: the NPXS40008 bundle is rebranded in
@@ -203,7 +286,7 @@ bool bootstrap_assets_write(void) {
     }
     char path[256];
     snprintf(path, sizeof(path), "%s/hyl92seticon.png", kRnpsTextureDirs[i]);
-    (void)write_file_atomic(path, sicon_start, sicon_size);
+    (void)write_file_if_different(path, sicon_start, sicon_size);
 
     /* Orphan left by earlier etaHEN installs in the same texture dir: our
      * bundle patch redirects "icon_setting" to hyl92seticon.png, so the old
@@ -225,7 +308,8 @@ bool bootstrap_assets_write(void) {
        ++i) {
     struct stat st;
     if (stat(kRebrandIfPresent[i], &st) == 0 && S_ISREG(st.st_mode)) {
-      replace_shell_file(kRebrandIfPresent[i], sicon_start, sicon_size);
+      (void)write_file_if_different(kRebrandIfPresent[i], sicon_start,
+                                    sicon_size);
     }
   }
   return startup_icon_ready;

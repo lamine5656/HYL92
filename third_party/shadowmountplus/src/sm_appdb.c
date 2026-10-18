@@ -249,6 +249,33 @@ out:
  */
 #define HYL92_DB_TITLE "\xe2\x98\x85 HYL92 Tools"
 bool app_db_rebrand_debug_settings_titles(void) {
+  /* One combined pre-check keeps converged boots write-free: UPDATE-less
+   * boots never take a write lock that could race the shell's own access. */
+  const char *pending_check_sql =
+      "SELECT "
+      "(SELECT COUNT(*) FROM tbl_contentinfo "
+      " WHERE titleName LIKE '%Debug Settings%') + "
+      "(SELECT COUNT(*) FROM tbl_iconinfo_0395971800 "
+      " WHERE titleName LIKE '%Debug Settings%') + "
+      "(SELECT COUNT(*) FROM tbl_iconinfo_0395971801 "
+      " WHERE titleName LIKE '%Debug Settings%') + "
+      "(SELECT COUNT(*) FROM tbl_conceptmetadata "
+      " WHERE conceptName LIKE '%Debug Settings%') + "
+      "(SELECT COUNT(*) FROM tbl_concepticoninfo_0395971800 "
+      " WHERE conceptName LIKE '%Debug Settings%' "
+      " OR primaryTitleName LIKE '%Debug Settings%') + "
+      "(SELECT COUNT(*) FROM tbl_concepticoninfo_0395971801 "
+      " WHERE conceptName LIKE '%Debug Settings%' "
+      " OR primaryTitleName LIKE '%Debug Settings%');";
+  const int pending = app_db_query_int(pending_check_sql,
+                                       "debug rebrand pending check");
+  if (pending < 0) {
+    return false;
+  }
+  if (pending == 0) {
+    return true;
+  }
+
   static const char *const kUpdateQueries[] = {
       "UPDATE tbl_contentinfo SET titleName='" HYL92_DB_TITLE "' "
       "WHERE titleName LIKE '%Debug Settings%';",
