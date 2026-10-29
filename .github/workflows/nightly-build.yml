@@ -189,3 +189,83 @@ jobs:
             - Build type: Release
 
             Download `HyperHEN.elf`. This is not a tagged stable release.
+
+  # Boot HyperHEN straight from the YouTube (Y2JB) entry point: replaces the
+  # Payload Manager stage of the itsPLK autoloader with this nightly ELF and
+  # ships a ready-to-FTP UFS2 image.
+  y2jb-bundle:
+    needs: nightly-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      Y2JB_REPO: itsPLK/ps5-y2jb-autoloader
+      SPLASH_DIR: download0/cache/splash_screen/aHR0cHM6Ly93d3cueW91dHViZS5jb20vdHY=
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Download nightly-build
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly-build
+          path: dist
+
+      - name: Prepare download0 tree
+        run: |
+          set -euo pipefail
+          test -f dist/HyperHEN.elf
+          mkdir -p "${SPLASH_DIR}"
+          curl -fsSL --retry 3 -o y2jb_update.zip \
+            "https://github.com/${Y2JB_REPO}/releases/latest/download/y2jb_update.zip"
+          unzip -q -o y2jb_update.zip -d "${SPLASH_DIR}"
+          rm -f "${SPLASH_DIR}/update-info.txt"
+          # Boot HyperHEN instead of the Payload Manager (rewrites AUTOLOAD_ELF
+          # and drops the autoloader/pldmgr stage).
+          python3 scripts/y2jb_bundle.py --download0 download0 --elf dist/HyperHEN.elf
+
+      - name: Create UFS2 download0.dat in FreeBSD
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "14.2"
+          copyback: true
+          run: |
+            set -e
+            # 336789504 bytes: the size the YouTube app expects for download0.dat.
+            truncate -s 336789504 download0.dat
+            MD=$(mdconfig -a -t vnode -f "$(pwd)/download0.dat")
+            newfs -O 2 -b 32768 -f 4096 /dev/${MD}
+            mount /dev/${MD} /mnt
+            cp -R download0/. /mnt/
+            chmod -R 777 /mnt/*
+            chmod 444 /mnt/cache/splash_screen/*/splash.html
+            umount /mnt
+            mdconfig -d -u ${MD}
+            [ "$(stat -f %z download0.dat)" -eq 336789504 ]
+
+      - name: Package image
+        run: |
+          set -euo pipefail
+          test "$(stat -c %s download0.dat)" -eq "${IMAGE_SIZE}"
+          python3 - <<'PY'
+          import zipfile
+          with zipfile.ZipFile("download0-HyperHEN.zip", "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+              z.write("download0.dat", "download0.dat")
+          PY
+          cp -f download0-HyperHEN.zip dist/
+          ls -l download0-HyperHEN.zip
+
+      - name: Upload bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: y2jb-download0
+          path: download0-HyperHEN.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Attach image to nightly release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload nightly download0-HyperHEN.zip --clobber

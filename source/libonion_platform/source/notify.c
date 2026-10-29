@@ -41,6 +41,13 @@ _Static_assert(sizeof(OrbisNotificationRequest) == 0xC30,
 static onion_notify_send_fn g_send = NULL;
 static onion_notify_rich_send_fn g_rich_send = NULL;
 
+/* Boot silence window: see the header. Only the boot verdict gets through. */
+static bool g_quiet = false;
+
+void onion_notify_quiet_begin(void) { g_quiet = true; }
+void onion_notify_quiet_end(void) { g_quiet = false; }
+bool onion_notify_quiet_active(void) { return g_quiet; }
+
 void onion_notify_set_send(onion_notify_send_fn fn) { g_send = fn; }
 
 void onion_notify_set_rich_send(onion_notify_rich_send_fn fn) {
@@ -92,6 +99,12 @@ static void onion_notify_send_request(OrbisNotificationRequest *req,
 }
 
 void onion_notify_v(int show_watermark, const char *fmt, va_list ap) {
+  if (g_quiet) {
+    /* Dropped before building the request: no format, no syscall. */
+    LOG_DEBUG("Notify muted during boot: %s", fmt);
+    return;
+  }
+
   OrbisNotificationRequest req;
   memset(&req, 0, sizeof(req));
   onion_notify_format(req.message, sizeof(req.message), show_watermark, fmt, ap);
@@ -105,7 +118,26 @@ void onion_notify(int show_watermark, const char *fmt, ...) {
   va_end(args);
 }
 
+void onion_notify_final_v(int show_watermark, const char *fmt, va_list ap) {
+  const bool was_quiet = g_quiet;
+  g_quiet = false; /* the verdict always reaches the UI */
+  onion_notify_v(show_watermark, fmt, ap);
+  g_quiet = was_quiet;
+}
+
+void onion_notify_final(int show_watermark, const char *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  onion_notify_final_v(show_watermark, fmt, args);
+  va_end(args);
+}
+
 void onion_notify_debug_v(int show_watermark, const char *fmt, va_list ap) {
+  if (g_quiet) {
+    LOG_DEBUG("Notify(debug) muted during boot: %s", fmt);
+    return;
+  }
+
   OrbisNotificationRequest req;
   memset(&req, 0, sizeof(req));
   /* Same i18n path as onion_notify. No system icon. */
@@ -136,9 +168,24 @@ void onion_notify_try_rich(const char *payload, const char *plain_key) {
   onion_notify(/*show_watermark=*/0, plain_key ? plain_key : "");
 }
 
+void onion_notify_try_rich_final(const char *payload, const char *plain_key) {
+  if (onion_notify_send_rich_payload(payload) == 0) {
+    return;
+  }
+  LOG_WARN("Rich notify unavailable; using system toast");
+  onion_notify_final(/*show_watermark=*/0, plain_key ? plain_key : "");
+}
+
 void onion_notify_rich(const char *message, const char *sub_message,
                        const char *icon_url, const char *preview_icon,
                        const char *notification_id) {
+  if (g_quiet) {
+    /* Skip the cJSON build entirely while the boot window is silent. */
+    LOG_DEBUG("Rich notify muted during boot: %s",
+              message ? message : "");
+    return;
+  }
+
   const char *plain_key =
       (sub_message && sub_message[0] != '\0')
           ? sub_message

@@ -244,7 +244,8 @@ void sig_handler(int signo) {
     }
     onion_log_emergency("signal %d received; main HyperHEN has crashed", signo);
     onion_print_backtrace(onion_log_emergency);
-    onion_notify(true, "notify.crash.main");
+    /* Always shown, even if the crash lands inside the silent boot window. */
+    onion_notify_final(true, "notify.crash.main");
     _exit(128 + signo);
 }
 
@@ -261,6 +262,11 @@ int main() {
       sceKernelSendNotificationRequest));
   onion_notify_set_rich_send(reinterpret_cast<onion_notify_rich_send_fn>(
       sceNotificationSend));
+  /* Startup is silent: no "settings created", "loader recovered" or
+   * "services restarting" transient toasts. Only the boot verdict below and
+   * crash reports punch through, so the user gets exactly one toast per boot
+   * and the start path is not blocked by a dozen queued send syscalls. */
+  onion_notify_quiet_begin();
 
   char buz[255];
   pthread_t app_jailbreak_thr = nullptr;
@@ -331,7 +337,11 @@ int main() {
   const std::string welcome_toast_json = onion::daemon::make_welcome_toast_json(
       debug_settings_route.toolbox_uri(
           onion::debug_settings_route::UriKind::Simple));
-  onion_notify_try_rich(welcome_toast_json.c_str(), "notify.boot.success");
+  /* Final success verdict — always delivered, even while the window is quiet. */
+  onion_notify_try_rich_final(welcome_toast_json.c_str(), "notify.boot.success");
+  /* Boot is over: runtime toasts (rest mode, util restart, IP change) flow
+   * normally again from here on. */
+  onion_notify_quiet_end();
   LOG_INFO("StartUp thread created!! - welcome to HYL92");
 
   onion::daemon::apply_startup_destination(boot_settings);

@@ -65,6 +65,29 @@ void onion_notify_rich(const char *message, const char *sub_message,
 void onion_notify_try_rich(const char *payload, const char *plain_key);
 
 /**
+ * Boot-time silence window.
+ *
+ * A boot chain emits a dozen transients (settings created, loader recovered,
+ * services restarting, HyperCore loading). PS5 toasts queue up, overwrite each
+ * other and are gone before anyone reads them, so only the verdict matters:
+ * one final success or failure toast per boot.
+ *
+ * onion_notify_quiet_begin() mutes every ordinary toast for this process until
+ * onion_notify_quiet_end(). The onion_notify_final*() variants punch through the
+ * mute, so the verdict is still delivered. Muted toasts skip the request build,
+ * the i18n lookup and the blocking send syscall, which keeps boot responsive.
+ */
+void onion_notify_quiet_begin(void);
+void onion_notify_quiet_end(void);
+bool onion_notify_quiet_active(void);
+
+/** Toast that ignores the boot silence window (use for the boot verdict). */
+void onion_notify_final_v(int show_watermark, const char *fmt, va_list ap);
+void onion_notify_final(int show_watermark, const char *fmt, ...);
+/** Prebuilt rich JSON toast that ignores the boot silence window. */
+void onion_notify_try_rich_final(const char *payload, const char *plain_key);
+
+/**
  * Format a notification body: onion_notify_tr(key) then vsnprintf.
  * show_watermark non-zero prefixes "[HyperHEN] ".
  */
