@@ -20,10 +20,15 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#include <LzmaLib.h>
+#define LZMA_PROPS_SIZE 5
+#define LZMA_CLI_HEADER_SIZE 13
+
 extern uint8_t sicon_start[];
 extern const unsigned int sicon_size;
-extern uint8_t hyl92_bg_start[];
-extern const unsigned int hyl92_bg_size;
+/* LZMA-compressed raw background (see daemon.c); decoded on demand below. */
+extern uint8_t hyl92_bg_lzma_start[];
+extern const unsigned int hyl92_bg_lzma_size;
 extern uint8_t klogsrv_start[];
 extern const unsigned int klogsrv_size;
 extern uint8_t ftpsrv_start[];
@@ -75,6 +80,10 @@ static const char *const kShellBackgrounds[] = {
     "/system_ex/vsh_asset/bg_NPXS40144.dds",
     "/system_ex/vsh_asset/bg_NPXS40154.dds",
 };
+
+/* Stock layout: 148-byte DDS header + 1920x1080 BGRA8888 pixels. Kept as a
+ * shared constant for the size gates below and the LZMA header validation. */
+#define kExpectedBGSize (148 + (size_t)1920 * 1080 * 4)
 
 /*
  * FreeBSD-style file flags (this kernel is a FreeBSD fork): the stock shell
@@ -199,24 +208,136 @@ static bool write_file_if_different(const char *path, const void *data,
   return converge_file(path, data, size, false);
 }
 
+/*
+ * Decode the LZMA-compressed raw background (xz -F lzma CLI header: 5 props
+ * bytes + 8-byte LE uncompressed size). The decompression pattern mirrors the
+ * unpacker's embedded bootstrapper handling.
+ */
+static bool hyl92_bg_decode(uint8_t **out, size_t *out_size) {
+  *out = NULL;
+  *out_size = 0;
+  if (hyl92_bg_lzma_size <= LZMA_CLI_HEADER_SIZE)
+    return false;
+
+  uint64_t declared = 0;
+  for (unsigned i = 0; i < 8; ++i) {
+    declared |= (uint64_t)hyl92_bg_lzma_start[LZMA_PROPS_SIZE + i] << (8 * i);
+  }
+  /* The xz/lzma CLI headers carry the exact uncompressed size; some packers
+   * emit the "unknown size" sentinel instead — accept both as long as the
+   * result matches the fixed BGRA layout. Anything else is corruption. */
+  const uint64_t kUnkownSize = 0xFFFFFFFFFFFFFFFFULL;
+  if (declared != (uint64_t)kExpectedBGSize && declared != kUnkownSize) {
+    return false;
+  }
+
+  uint8_t *buf = (uint8_t *)malloc(kExpectedBGSize);
+  if (!buf)
+    return false;
+
+  size_t src_len = hyl92_bg_lzma_size - LZMA_CLI_HEADER_SIZE;
+  size_t dest_len = kExpectedBGSize;
+  if (LzmaUncompress(buf, &dest_len,
+                     hyl92_bg_lzma_start + LZMA_CLI_HEADER_SIZE, &src_len,
+                     hyl92_bg_lzma_start, LZMA_PROPS_SIZE) != SZ_OK ||
+      dest_len != kExpectedBGSize) {
+    LOG_ERROR("assets: background LZMA decode failed");
+    free(buf);
+    return false;
+  }
+  *out = buf;
+  *out_size = dest_len;
+  return true;
+}
+
+/* Once every BGRA DDS target has been converged we skip decoding the ~3.7 MB
+ * compressed blob on later boots. The marker text pins the expected size and
+ * the build id so a stale marker from another build can never short-circuit
+ * differently-sized artwork. */
+#define HYL92_BG_MARKER_PATH "/data/HyperHEN/.bg_converged"
+
+static void bg_marker_text(char text[192], size_t expected) {
+  snprintf(text, 192, "HYL92BG1 size=%zu build=%s\n", expected,
+           HYPERHEN_BUILD_ID);
+}
+
+static bool bg_marker_valid(size_t expected) {
+  char expected_text[192];
+  bg_marker_text(expected_text, expected);
+  FILE *f = fopen(HYL92_BG_MARKER_PATH, "rb");
+  if (!f)
+    return false;
+  char stored[192] = {0};
+  const size_t n = fread(stored, 1, sizeof(stored) - 1, f);
+  fclose(f);
+  const size_t expected_len = strlen(expected_text);
+  return n == expected_len && memcmp(stored, expected_text, n) == 0;
+}
+
+static void bg_marker_write(size_t expected) {
+  char text[192];
+  bg_marker_text(text, expected);
+  (void)write_file_if_different(HYL92_BG_MARKER_PATH, text, strlen(text));
+}
+
+static void bg_marker_clear(void) { (void)unlink(HYL92_BG_MARKER_PATH); }
+
 static void converge_shell_backgrounds(void) {
-  const size_t kExpectedSize = 148 + (size_t)1920 * 1080 * 4;
-  if ((size_t)hyl92_bg_size != kExpectedSize) {
+  const size_t kExpectedSize = kExpectedBGSize;
+  if ((size_t)hyl92_bg_lzma_size <= LZMA_CLI_HEADER_SIZE) {
     return;
   }
+
+  /* Size gate first so untouched/unknown consoles skip the decode entirely. */
+  bool any_candidate = false;
+  for (size_t i = 0;
+       !any_candidate &&
+       i < sizeof(kShellBackgrounds) / sizeof(kShellBackgrounds[0]); ++i) {
+    struct stat st;
+    if (stat(kShellBackgrounds[i], &st) == 0 && S_ISREG(st.st_mode) &&
+        st.st_size == (long long)kExpectedSize) {
+      any_candidate = true;
+    }
+  }
+  if (!any_candidate)
+    return;
+  if (bg_marker_valid(kExpectedSize)) {
+    return;
+  }
+
+  uint8_t *decoded = NULL;
+  size_t decoded_size = 0;
+  if (!hyl92_bg_decode(&decoded, &decoded_size) ||
+      decoded_size != kExpectedSize) {
+    free(decoded);
+    LOG_ERROR("assets: background decode unavailable, skipping reflash");
+    bg_marker_clear();
+    return;
+  }
+
+  bool all_converged = true;
   for (size_t i = 0;
        i < sizeof(kShellBackgrounds) / sizeof(kShellBackgrounds[0]); ++i) {
     struct stat st;
     const char *path = kShellBackgrounds[i];
     if (stat(path, &st) != 0 || !S_ISREG(st.st_mode) ||
-        st.st_size != (long long)hyl92_bg_size) {
+        st.st_size != (long long)kExpectedSize) {
       continue;
     }
-    if (bg_samples_identical(path, hyl92_bg_start, (size_t)hyl92_bg_size)) {
-      continue;
+    if (!bg_samples_identical(path, decoded, (size_t)kExpectedSize)) {
+      if (!converge_file(path, decoded, (size_t)kExpectedSize, true)) {
+        all_converged = false;
+        LOG_ERROR("assets: background %s failed to converge", path);
+      }
     }
-    (void)converge_file(path, hyl92_bg_start, (size_t)hyl92_bg_size, true);
   }
+
+  if (all_converged) {
+    bg_marker_write(kExpectedSize);
+  } else {
+    bg_marker_clear();
+  }
+  free(decoded);
 }
 
 bool bootstrap_assets_write(void) {

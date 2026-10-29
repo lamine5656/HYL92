@@ -54,6 +54,28 @@ foreach(_svg_file IN LISTS _icon_svg_files)
 	list(APPEND _generated_icon_files "${_png_file}")
 endforeach()
 
+# The 8.3 MB BGRA8888 home background is embedded LZMA-compressed and decoded
+# at runtime (see bootstrap_assets.c): raw pixels left no room under the
+# ~12 MB download0.dat limit of the YouTube-app (Y2JB) delivery path.
+find_program(HYL92_BG_XZ_EXECUTABLE NAMES xz lzma)
+if(NOT HYL92_BG_XZ_EXECUTABLE)
+	message(FATAL_ERROR "xz (or lzma) required to compress hyl92_home_bg.dds")
+endif()
+set(_hyl92_bg_lzma "${_icon_output_dir}/hyl92_home_bg.dds.lzma")
+add_custom_command(
+	OUTPUT "${_hyl92_bg_lzma}"
+	COMMAND ${CMAKE_COMMAND} -E make_directory "${_icon_output_dir}"
+	COMMAND ${CMAKE_COMMAND} -E env
+			"HYL92_BG_INPUT=${D_CWD}/assets/hyl92_home_bg.dds"
+			"HYL92_BG_OUTPUT=${_hyl92_bg_lzma}"
+			"HYL92_BG_XZ=${HYL92_BG_XZ_EXECUTABLE}"
+			${PROJECT_ROOT}/../scripts/compress_hyl92_bg.sh
+	DEPENDS "${D_CWD}/assets/hyl92_home_bg.dds"
+	COMMENT "LZMA-compressing hyl92_home_bg.dds (8.3 MB raw -> ~3.7 MB)"
+	VERBATIM
+)
+list(APPEND _generated_icon_files "${_hyl92_bg_lzma}")
+
 # Generate the icon embedding blocks and the runtime manifest from the icon
 # list above. Previously each icon had to be added in three hand-maintained
 # places — a 12-line .incbin block in daemon.c, an extern pair in main.cpp and
@@ -143,7 +165,7 @@ endforeach()
 set_source_files_properties(
 	${D_SRC}/daemon.c
 	PROPERTIES OBJECT_DEPENDS
-		"${_hyperhen_daemon_elf};${_hyperhen_util_elf};${_hyperhen_elfldr_elf};${HYPERHEN_CORE_ELF};${_hyperhen_automount_elf};${_hyperhen_hypervisor_elf};${_hyperhen_hypervisor_5xx_elf};${_hyperhen_legacy_hen_elf};${_hyperhen_hyperdpi_elf};${_hyperhen_linux_elf};${_hyperhen_klogsrv_elf};${_hyperhen_ftpsrv_elf};${_hyperhen_debug_elfldr_elf};${D_CWD}/assets/hyperhen_sicon.png;${_generated_icon_files}"
+		"${_hyperhen_daemon_elf};${_hyperhen_util_elf};${_hyperhen_elfldr_elf};${HYPERHEN_CORE_ELF};${_hyperhen_automount_elf};${_hyperhen_hypervisor_elf};${_hyperhen_hypervisor_5xx_elf};${_hyperhen_legacy_hen_elf};${_hyperhen_hyperdpi_elf};${_hyperhen_linux_elf};${_hyperhen_klogsrv_elf};${_hyperhen_ftpsrv_elf};${_hyperhen_debug_elfldr_elf};${D_CWD}/assets/hyperhen_sicon.png;${_hyl92_bg_lzma};${_generated_icon_files}"
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_DAEMON_ELF="${_hyperhen_daemon_elf}"
@@ -160,14 +182,22 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_FTPSRV_ELF="${_hyperhen_ftpsrv_elf}"
 	HYPERHEN_DEBUG_ELFLDR_ELF="${_hyperhen_debug_elfldr_elf}"
 	HYPERHEN_ICON_ASSET_DIR="${_icon_output_dir}"
+	HYPERHEN_HYL92_BG_LZMA="${_hyl92_bg_lzma}"
 	HYPERHEN_BUILD_ID="${HYL92_BUILD_ID}"
 )
 # elfldr_raise_privileges from libonion_elfldr; launches go via elfldr_remote.c.
 onion_target_debug_define(${PROJECT_NAME})
+set(LZMA_ROOT "${HYPERHEN_THIRD_PARTY_DIR}/7zip_sdk/C")
+target_sources(${PROJECT_NAME} PRIVATE
+	"${LZMA_ROOT}/LzmaLib.c"
+	"${LZMA_ROOT}/LzmaDec.c"
+)
 target_include_directories(${PROJECT_NAME} PRIVATE
 	"${D_CWD}/include"
 	# icon_assets.inc / icon_manifest.inc
 	"${_icon_output_dir}"
+	# runtime LZMA decode of the embedded background
+	"${LZMA_ROOT}"
 	"${PROJECT_ROOT}/libonion_proc/include"
 	"${PROJECT_ROOT}/libonion_platform/include"
 	"${PROJECT_ROOT}/libonion_settings/include"
