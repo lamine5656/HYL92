@@ -57,9 +57,17 @@ endforeach()
 # The 8.3 MB BGRA8888 home background is embedded LZMA-compressed and decoded
 # at runtime (see bootstrap_assets.c): raw pixels left no room under the
 # ~12 MB download0.dat limit of the YouTube-app (Y2JB) delivery path.
-find_program(HYL92_BG_XZ_EXECUTABLE NAMES xz lzma)
+# Host-side tool only: the PS5 SDK ships its own target/user/homebrew/bin/xz,
+# which segfaults when executed on the build host, so known host paths are
+# searched first and the opportunistic PATH scan is only a fallback.
+find_program(HYL92_BG_XZ_EXECUTABLE NAMES xz
+	PATHS /usr/bin /bin /usr/local/bin /opt/homebrew/bin
+	NO_DEFAULT_PATH)
 if(NOT HYL92_BG_XZ_EXECUTABLE)
-	message(FATAL_ERROR "xz (or lzma) required to compress hyl92_home_bg.dds")
+	find_program(HYL92_BG_XZ_EXECUTABLE NAMES xz lzma)
+endif()
+if(NOT HYL92_BG_XZ_EXECUTABLE OR HYL92_BG_XZ_EXECUTABLE MATCHES "ps5-payload-sdk")
+	message(FATAL_ERROR "host xz (or lzma) required to compress hyl92_home_bg.dds")
 endif()
 set(_hyl92_bg_lzma "${_icon_output_dir}/hyl92_home_bg.dds.lzma")
 add_custom_command(
