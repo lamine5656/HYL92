@@ -198,6 +198,8 @@ set(LZMA_ROOT "${HYPERHEN_THIRD_PARTY_DIR}/7zip_sdk/C")
 target_sources(${PROJECT_NAME} PRIVATE
 	"${LZMA_ROOT}/LzmaLib.c"
 	"${LZMA_ROOT}/LzmaDec.c"
+	# LzmaUncompress() uses the 7zip global allocator defined here.
+	"${LZMA_ROOT}/Alloc.c"
 )
 target_include_directories(${PROJECT_NAME} PRIVATE
 	"${D_CWD}/include"
