@@ -82,7 +82,6 @@ add_custom_command(
 	COMMENT "LZMA-compressing hyl92_home_bg.dds (8.3 MB raw -> ~3.7 MB)"
 	VERBATIM
 )
-list(APPEND _generated_icon_files "${_hyl92_bg_lzma}")
 
 # Generate the icon embedding blocks and the runtime manifest from the icon
 # list above. Previously each icon had to be added in three hand-maintained
@@ -220,8 +219,11 @@ target_link_directories(${PROJECT_NAME} PUBLIC
 )
 target_sources(${PROJECT_NAME} PRIVATE "${HYPERHEN_COMMON_DIR}/elfldr_remote.c")
 target_link_libraries	(${PROJECT_NAME} PUBLIC onion_proc onion_platform onion_settings onion_payload onion_conflict onion_ready onion_elfldr kernel_sys SceAudioOut SceNotification SceSystemService SceUserService)
+# (the compressed background OUTPUT is wired in directly below — keep it out
+# of _generated_icon_files, whose entries the icon asm generator treats as
+# NAME_WE .png images).
 add_custom_target(${PROJECT_NAME}_assets
-	DEPENDS ${_generated_icon_files} "${_icon_asm}" "${_icon_manifest}")
+	DEPENDS ${_generated_icon_files} "${_icon_asm}" "${_icon_manifest}" "${_hyl92_bg_lzma}")
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_assets)
 add_dependencies(${PROJECT_NAME} hypercore_payload automount_payload hypervisor_payload hypervisor_5xx_payload legacy_hen_payload hyperlinux_payload hyperdpi daemon util shellui hyperhen_elfldr_server hyperhen_debug_elfldr_server onion_proc onion_platform onion_settings onion_payload onion_conflict onion_ready onion_elfldr)
 
