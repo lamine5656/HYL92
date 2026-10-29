@@ -209,12 +209,15 @@ static bool launch_blob(LaunchContext *context, const uint8_t *elf, size_t size,
     return true;
   }
 
-  for (int i = 0; i < 30; ++i) {
+  /* Poll every 100 ms instead of once a second: a freshly launched service
+   * usually shows up in a few hundred milliseconds, and waiting in 1 s steps
+   * burned up to a second per service for nothing. The 30 s cap is unchanged. */
+  for (int i = 0; i < 300; ++i) {
     if (wait_name && onion_find_pid_substr(wait_name) > 0) {
       LOG_DEBUG("  running: %s", wait_name);
       return true;
     }
-    sleep(1);
+    usleep(100 * 1000);
   }
   LOG_DEBUG("  sent %s (process name not seen yet, continuing)", label);
   return true;
@@ -251,6 +254,8 @@ static void prepare_hypervisor_markers(void) {
 
 static bool wait_for_hypervisor_ready(void) {
   int missing_process_checks = 0;
+  /* Same 10 s budget for a missing process, polled at 100 ms so the stage
+   * continues as soon as the marker lands instead of on the next full second. */
   for (;;) {
     if (onion_ready_is_set(ONION_READY_HYPERVISOR))
       return true;
@@ -263,11 +268,11 @@ static bool wait_for_hypervisor_ready(void) {
     if (onion_ready_read_pid(ONION_READY_HYPERVISOR_ARMED, &armed_pid) &&
         onion_proc_is_alive(armed_pid)) {
       missing_process_checks = 0;
-    } else if (++missing_process_checks >= 10) {
+    } else if (++missing_process_checks >= 100) {
       bootstrap_notify("notify.boot.failed");
       return false;
     }
-    sleep(1);
+    usleep(100 * 1000);
   }
 }
 
@@ -618,7 +623,10 @@ int bootstrap_launch_services(uint32_t firmware_version, bool kstuff_autoload) {
   };
   LOG_DEBUG("payload loader port: %u", context.loader_port);
   LOG_DEBUG("launching embedded ELFs (serialized)");
-  sleep(3);
+  /* Was a blanket sleep(3) on every boot. elfldr was already confirmed
+   * reachable just above, so a short settle is enough; the launch helper keeps
+   * its own retry/fallback path for a loader that is still coming up. */
+  usleep(500 * 1000);
 
   prepare_service_markers();
   if (route == ONION_FIRMWARE_ROUTE_USERLAND_ONLY) {
