@@ -54,32 +54,28 @@ foreach(_svg_file IN LISTS _icon_svg_files)
 	list(APPEND _generated_icon_files "${_png_file}")
 endforeach()
 
-# The 8.3 MB BGRA8888 home background is embedded LZMA-compressed and decoded
-# at runtime (see bootstrap_assets.c): raw pixels left no room under the
-# ~12 MB download0.dat limit of the YouTube-app (Y2JB) delivery path.
-# Host-side tool only: the PS5 SDK ships its own target/user/homebrew/bin/xz,
-# which segfaults when executed on the build host, so known host paths are
-# searched first and the opportunistic PATH scan is only a fallback.
-find_program(HYL92_BG_XZ_EXECUTABLE NAMES xz
-	PATHS /usr/bin /bin /usr/local/bin /opt/homebrew/bin
-	NO_DEFAULT_PATH)
-if(NOT HYL92_BG_XZ_EXECUTABLE)
-	find_program(HYL92_BG_XZ_EXECUTABLE NAMES xz lzma)
-endif()
-if(NOT HYL92_BG_XZ_EXECUTABLE OR HYL92_BG_XZ_EXECUTABLE MATCHES "ps5-payload-sdk")
-	message(FATAL_ERROR "host xz (or lzma) required to compress hyl92_home_bg.dds")
-endif()
-set(_hyl92_bg_lzma "${_icon_output_dir}/hyl92_home_bg.dds.lzma")
+# The 8.3 MB BGRA8888 home background does not fit the ~12 MB download0.dat
+# budget of the YouTube-app (Y2JB) delivery path. Compressing it at build time
+# does not help: bootstrapper.elf is packed with LZMA as a whole (see
+# pack_bootstrapper.sh), so the packer already pays for the raw pixels and a
+# nested .lzma blob just compresses twice. Carrying fewer pixels does help:
+# the artwork is shipped as a 256-colour indexed image at HYPERHEN_BG_PAL_SIZE
+# (~0.92 MB instead of 8.3 MB) and bootstrap_assets.c expands it back to the
+# stock 1920x1080 DDS at runtime.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(HYPERHEN_BG_PAL_SIZE "1280x720" CACHE STRING
+	"Palette background source resolution (WxH); stock output stays 1920x1080")
+set(_hyl92_bg_pal "${_icon_output_dir}/hyl92_home_bg.pal")
 add_custom_command(
-	OUTPUT "${_hyl92_bg_lzma}"
+	OUTPUT "${_hyl92_bg_pal}"
 	COMMAND ${CMAKE_COMMAND} -E make_directory "${_icon_output_dir}"
-	COMMAND ${CMAKE_COMMAND} -E env
-			"HYL92_BG_INPUT=${D_CWD}/assets/hyl92_home_bg.dds"
-			"HYL92_BG_OUTPUT=${_hyl92_bg_lzma}"
-			"HYL92_BG_XZ=${HYL92_BG_XZ_EXECUTABLE}"
-			${PROJECT_ROOT}/../scripts/compress_hyl92_bg.sh
+	COMMAND "${Python3_EXECUTABLE}" "${PROJECT_ROOT}/../scripts/gen_bg_pal.py"
+			--input "${D_CWD}/assets/hyl92_home_bg.dds"
+			--output "${_hyl92_bg_pal}"
+			--size "${HYPERHEN_BG_PAL_SIZE}"
 	DEPENDS "${D_CWD}/assets/hyl92_home_bg.dds"
-	COMMENT "LZMA-compressing hyl92_home_bg.dds (8.3 MB raw -> ~3.7 MB)"
+			"${PROJECT_ROOT}/../scripts/gen_bg_pal.py"
+	COMMENT "Palette-encoding hyl92_home_bg.dds (8.3 MB BGRA -> ~0.9 MB indexed)"
 	VERBATIM
 )
 
@@ -172,7 +168,7 @@ endforeach()
 set_source_files_properties(
 	${D_SRC}/daemon.c
 	PROPERTIES OBJECT_DEPENDS
-		"${_hyperhen_daemon_elf};${_hyperhen_util_elf};${_hyperhen_elfldr_elf};${HYPERHEN_CORE_ELF};${_hyperhen_automount_elf};${_hyperhen_hypervisor_elf};${_hyperhen_hypervisor_5xx_elf};${_hyperhen_legacy_hen_elf};${_hyperhen_hyperdpi_elf};${_hyperhen_linux_elf};${_hyperhen_klogsrv_elf};${_hyperhen_ftpsrv_elf};${_hyperhen_debug_elfldr_elf};${D_CWD}/assets/hyperhen_sicon.png;${_hyl92_bg_lzma};${_generated_icon_files}"
+		"${_hyperhen_daemon_elf};${_hyperhen_util_elf};${_hyperhen_elfldr_elf};${HYPERHEN_CORE_ELF};${_hyperhen_automount_elf};${_hyperhen_hypervisor_elf};${_hyperhen_hypervisor_5xx_elf};${_hyperhen_legacy_hen_elf};${_hyperhen_hyperdpi_elf};${_hyperhen_linux_elf};${_hyperhen_klogsrv_elf};${_hyperhen_ftpsrv_elf};${_hyperhen_debug_elfldr_elf};${D_CWD}/assets/hyperhen_sicon.png;${_hyl92_bg_pal};${_generated_icon_files}"
 )
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_DAEMON_ELF="${_hyperhen_daemon_elf}"
@@ -189,24 +185,15 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 	HYPERHEN_FTPSRV_ELF="${_hyperhen_ftpsrv_elf}"
 	HYPERHEN_DEBUG_ELFLDR_ELF="${_hyperhen_debug_elfldr_elf}"
 	HYPERHEN_ICON_ASSET_DIR="${_icon_output_dir}"
-	HYPERHEN_HYL92_BG_LZMA="${_hyl92_bg_lzma}"
+	HYPERHEN_HYL92_BG_PAL="${_hyl92_bg_pal}"
 	HYPERHEN_BUILD_ID="${HYL92_BUILD_ID}"
 )
 # elfldr_raise_privileges from libonion_elfldr; launches go via elfldr_remote.c.
 onion_target_debug_define(${PROJECT_NAME})
-set(LZMA_ROOT "${HYPERHEN_THIRD_PARTY_DIR}/7zip_sdk/C")
-target_sources(${PROJECT_NAME} PRIVATE
-	"${LZMA_ROOT}/LzmaLib.c"
-	"${LZMA_ROOT}/LzmaDec.c"
-	# LzmaUncompress() uses the 7zip global allocator defined here.
-	"${LZMA_ROOT}/Alloc.c"
-)
 target_include_directories(${PROJECT_NAME} PRIVATE
 	"${D_CWD}/include"
 	# icon_assets.inc / icon_manifest.inc
 	"${_icon_output_dir}"
-	# runtime LZMA decode of the embedded background
-	"${LZMA_ROOT}"
 	"${PROJECT_ROOT}/libonion_proc/include"
 	"${PROJECT_ROOT}/libonion_platform/include"
 	"${PROJECT_ROOT}/libonion_settings/include"
@@ -221,11 +208,11 @@ target_link_directories(${PROJECT_NAME} PUBLIC
 )
 target_sources(${PROJECT_NAME} PRIVATE "${HYPERHEN_COMMON_DIR}/elfldr_remote.c")
 target_link_libraries	(${PROJECT_NAME} PUBLIC onion_proc onion_platform onion_settings onion_payload onion_conflict onion_ready onion_elfldr kernel_sys SceAudioOut SceNotification SceSystemService SceUserService)
-# (the compressed background OUTPUT is wired in directly below — keep it out
-# of _generated_icon_files, whose entries the icon asm generator treats as
+# (the palette background OUTPUT is wired in directly below — keep it out of
+# _generated_icon_files, whose entries the icon asm generator treats as
 # NAME_WE .png images).
 add_custom_target(${PROJECT_NAME}_assets
-	DEPENDS ${_generated_icon_files} "${_icon_asm}" "${_icon_manifest}" "${_hyl92_bg_lzma}")
+	DEPENDS ${_generated_icon_files} "${_icon_asm}" "${_icon_manifest}" "${_hyl92_bg_pal}")
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_assets)
 add_dependencies(${PROJECT_NAME} hypercore_payload automount_payload hypervisor_payload hypervisor_5xx_payload legacy_hen_payload hyperlinux_payload hyperdpi daemon util shellui hyperhen_elfldr_server hyperhen_debug_elfldr_server onion_proc onion_platform onion_settings onion_payload onion_conflict onion_ready onion_elfldr)
 
