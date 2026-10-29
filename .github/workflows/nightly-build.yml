@@ -248,7 +248,8 @@ jobs:
       - name: Package image
         run: |
           set -euo pipefail
-          test "$(stat -c %s download0.dat)" -eq "${IMAGE_SIZE}"
+          # 336789504 bytes: the size the YouTube app expects for download0.dat.
+          test "$(stat -c %s download0.dat)" -eq 336789504
           python3 - <<'PY'
           import zipfile
           with zipfile.ZipFile("download0-HyperHEN.zip", "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
