@@ -241,6 +241,9 @@ jobs:
             cp -R download0/. /mnt/
             chmod -R 777 /mnt/*
             chmod 444 /mnt/cache/splash_screen/*/splash.html
+            # The image must carry the exact ELF this run built, not a stale one.
+            test "$(sha256 -q dist/HyperHEN.elf)" = \
+              "$(sha256 -q /mnt/cache/splash_screen/*/HyperHEN.elf)"
             umount /mnt
             mdconfig -d -u ${MD}
             [ "$(stat -f %z download0.dat)" -eq 336789504 ]
