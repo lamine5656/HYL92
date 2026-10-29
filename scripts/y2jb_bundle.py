@@ -4,8 +4,8 @@
 
 The itsPLK Y2JB chain is:
 
-    Relapse.js (kernel exploit) -> kexp.bin -> elfldr on :9021
-      -> main.js streams AUTOLOAD_ELF to elfldr
+    Relapse/Lapse (kernel exploit) -> kexp -> elfldr on :9021
+      -> the splash-screen JS streams its bundled ELF to elfldr
         -> ps5-unified-autoloader.elf: reads autoload.txt, else starts Payload Manager
 
 Nothing in that chain knows about HyperHEN, so the stock bundle always lands in
@@ -13,13 +13,14 @@ the Payload Manager web UI. This script rewires the first stage instead of
 fighting the second one:
 
   * copies HyperHEN.elf into the splash_screen cache directory,
-  * points main.js' AUTOLOAD_ELF at it, so elfldr receives HyperHEN directly
-    (main.js enforces a hard 16 MiB cap: `size > 0x1000000` throws),
-  * drops the now unreachable ps5-unified-autoloader.elf / pldmgr_v*.elf.
+  * points the JS at it (`AUTOLOAD_ELF` in older bundles, `payload_name` in the
+    v1.1+ split autoload.js), so elfldr receives HyperHEN directly,
+  * drops the now unreachable ps5-unified-autoloader.elf / pldmgr_v*.elf,
+  * drops Y2JB's comfort toasts (per-boot "FW : ..." banner and the misleading
+    "Successfully loaded unified autoloader"), because HyperHEN now reports the
+    only verdict that matters: its own success or failure toast.
 
-The result is a drop-in `download0/` tree for the UFS2 image build. HyperHEN
-then boots on its own and the only user feedback is its single success or
-failure toast, which matches the quiet boot window in libonion_platform.
+Errors from the exploit/loader are left untouched.
 
 Usage:
     scripts/y2jb_bundle.py --download0 <dir> --elf HyperHEN.elf [--out <dir>]
@@ -31,13 +32,28 @@ import re
 import shutil
 import sys
 
-# main.js refuses anything larger: `if (size < 4n || size > 0x1000000n)`.
+# Older main.js refuses anything larger: `size > 0x1000000n` throws.
 AUTOLOAD_SIZE_LIMIT = 0x1000000
 SPLASH_SUFFIX = ("cache", "splash_screen")
 BUNDLED_ELF = "HyperHEN.elf"
-AUTOLOAD_RE = re.compile(r'(const\s+AUTOLOAD_ELF\s*=\s*")([^"]*)(")')
+# Payload selection moved between releases; accept both spellings.
+AUTOLOAD_PATTERNS = (
+    re.compile(r'(const\s+AUTOLOAD_ELF\s*=\s*")([^"]*)(")'),
+    re.compile(r'(const\s+payload_name\s*=\s*")([^"]*)(")'),
+)
+SCRIPT_ORDER = ("autoload.js", "main.js")
 # Stage-one artefacts that only exist to reach the Payload Manager.
 REPLACED_FILES = ("ps5-unified-autoloader.elf",)
+TOAST_GUARD_MARK = "/* hyperhen: verdict only */"
+TOAST_GUARD = (
+    "    " + TOAST_GUARD_MARK + "\n"
+    "    // HyperHEN boots after this loader and reports the real verdict, so\n"
+    "    // drop Y2JB's per-boot chatter instead of stacking toasts on top of it.\n"
+    '    if (/^FW : /.test(text) ||\n'
+    '        /Successfully loaded unified autoloader/.test(text)) {\n'
+    "        return;\n"
+    "    }\n"
+)
 
 
 def fail(message):
@@ -60,22 +76,63 @@ def find_splash_dir(download0):
     return candidates[0]
 
 
-def patch_main_js(main_js_path):
-    text = main_js_path.read_text(encoding="utf-8", errors="surrogateescape")
-    match = AUTOLOAD_RE.search(text)
-    if not match:
-        fail("could not find the AUTOLOAD_ELF constant in %s" % main_js_path)
+def read_text(path):
+    return path.read_text(encoding="utf-8", errors="surrogateescape")
 
-    previous = match.group(2)
-    if previous == BUNDLED_ELF:
-        return previous, False
 
-    main_js_path.write_text(
-        text[: match.start()] + match.group(1) + BUNDLED_ELF + match.group(3) + text[match.end() :],
-        encoding="utf-8",
-        errors="surrogateescape",
+def write_text(path, text):
+    path.write_text(text, encoding="utf-8", errors="surrogateescape")
+
+
+def patch_payload_name(splash):
+    """Point the loader at HyperHEN.elf. Returns (file, previous, patched)."""
+    ordered = [splash / name for name in SCRIPT_ORDER]
+    ordered += [p for p in sorted(splash.glob("*.js")) if p not in ordered]
+
+    for script in ordered:
+        if not script.is_file():
+            continue
+        text = read_text(script)
+        for pattern in AUTOLOAD_PATTERNS:
+            match = pattern.search(text)
+            if not match:
+                continue
+            previous = match.group(2)
+            if previous == BUNDLED_ELF:
+                return script.name, previous, False
+            write_text(
+                script,
+                text[: match.start()]
+                + match.group(1)
+                + BUNDLED_ELF
+                + match.group(3)
+                + text[match.end() :],
+            )
+            return script.name, previous, True
+
+    fail(
+        "no payload constant found in %s (looked for AUTOLOAD_ELF / payload_name)"
+        % splash
     )
-    return previous, True
+
+
+def patch_toast_filter(splash):
+    """Silence Y2JB's per-boot comfort toasts, keep real errors."""
+    misc = splash / "misc.js"
+    if not misc.is_file():
+        return None
+    text = read_text(misc)
+    if TOAST_GUARD_MARK in text:
+        return "already filtered"
+
+    decl = "function send_notification(text) {\n"
+    index = text.find(decl)
+    if index < 0:
+        return "send_notification() not found, skipped"
+
+    insert_at = index + len(decl)
+    write_text(misc, text[:insert_at] + TOAST_GUARD + text[insert_at:])
+    return "boot chatter filtered"
 
 
 def main():
@@ -94,6 +151,11 @@ def main():
         type=pathlib.Path,
         help="write the patched tree here instead of modifying --download0 in place",
     )
+    parser.add_argument(
+        "--keep-toasts",
+        action="store_true",
+        help="keep Y2JB's own boot toasts (do not filter them)",
+    )
     args = parser.parse_args()
 
     source_tree = args.download0.resolve()
@@ -109,7 +171,7 @@ def main():
         fail("%s is not an ELF file" % elf)
     if not 4 <= len(payload) <= AUTOLOAD_SIZE_LIMIT:
         fail(
-            "%s is %d bytes; main.js only accepts 4..%d bytes (0x1000000)"
+            "%s is %d bytes; the loader only accepts 4..%d bytes (0x1000000)"
             % (elf, len(payload), AUTOLOAD_SIZE_LIMIT)
         )
 
@@ -123,8 +185,7 @@ def main():
         target = source_tree
 
     splash = find_splash_dir(target)
-    previous_elf, patched = patch_main_js(splash / "main.js")
-
+    script, previous_elf, patched = patch_payload_name(splash)
     (splash / BUNDLED_ELF).write_bytes(payload)
 
     removed = []
@@ -137,15 +198,26 @@ def main():
         stale.unlink()
         removed.append(stale.name)
 
-    print("splash dir : %s" % splash.relative_to(target))
-    print("AUTOLOAD_ELF: %s -> %s%s" % (previous_elf, BUNDLED_ELF, "" if patched else " (already set)"))
-    print("embedded   : %s (%d bytes, %.2f MiB)" % (BUNDLED_ELF, len(payload), len(payload) / 1048576))
-    print("removed    : %s" % (", ".join(removed) if removed else "nothing"))
+    toasts = "kept" if args.keep_toasts else patch_toast_filter(splash)
+
+    print("splash dir   : %s" % splash.relative_to(target))
+    print(
+        "payload hook : %s %s -> %s%s"
+        % (script, previous_elf, BUNDLED_ELF, "" if patched else " (already set)")
+    )
+    print(
+        "embedded     : %s (%d bytes, %.2f MiB)"
+        % (BUNDLED_ELF, len(payload), len(payload) / 1048576)
+    )
+    print("removed      : %s" % (", ".join(removed) if removed else "nothing"))
+    print("boot toasts  : %s" % toasts)
     total = sum(f.stat().st_size for f in target.rglob("*") if f.is_file())
-    print("tree size  : %d bytes (%.1f MiB)" % (total, total / 1048576))
+    print("tree size    : %d bytes (%.1f MiB)" % (total, total / 1048576))
     print()
     print("Next: build the 336789504-byte UFS2 image with")
-    print("  newfs -O 2 -b 32768 -f 4096 /dev/<md>  then  cp -R %s/* /mnt/" % target.name)
+    print(
+        "  newfs -O 2 -b 32768 -f 4096 /dev/<md>  then  cp -R %s/. /mnt/" % target.name
+    )
 
 
 if __name__ == "__main__":
